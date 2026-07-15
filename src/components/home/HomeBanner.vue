@@ -1,5 +1,5 @@
 <template>
-  <div class="home-banner" :style="{ backgroundImage: `url(${backgroundImage})` }">
+  <div class="home-banner" :style="bannerStyle">
     <div class="banner-overlay"></div>
     <div class="banner-content">
       <h1>{{ title }}</h1>
@@ -22,7 +22,14 @@ export default {
     },
     backgroundImage: {
       type: String,
-      default: 'https://via.placeholder.com/1200x500'
+      default: '' // 빈값을 기본으로 설정
+    }
+  },
+  computed: {
+    bannerStyle() {
+      return this.backgroundImage
+        ? { backgroundImage: `url(${this.backgroundImage})` }
+        : {}
     }
   }
 }
@@ -32,6 +39,8 @@ export default {
 .home-banner {
   height: 50vh;
   min-height: 400px;
+  /* 이미지 없을 때 보여줄 기본 그라데이션 */
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

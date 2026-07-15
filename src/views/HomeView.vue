@@ -63,8 +63,7 @@ export default {
       { id: 1, icon: '🏛️', label: '관광지', category: '관광지' },
       { id: 2, icon: '🎭', label: '문화시설', category: '문화시설' },
       { id: 3, icon: '🏃', label: '레포츠', category: '레포츠' },
-      { id: 4, icon: '🛍️', label: '쇼핑', category: '쇼핑' },
-      { id: 5, icon: '🍽️', label: '음식점', category: '음식점' }
+      { id: 4, icon: '🛍️', label: '쇼핑', category: '쇼핑' }
     ]
 
     // 최근 게시글 6개만 조회
@@ -121,7 +120,7 @@ export default {
 
 .category-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 20px;
 }
 

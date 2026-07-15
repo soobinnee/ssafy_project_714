@@ -33,9 +33,7 @@
           챗봇
         </button>
 
-        <div class="meta" aria-live="polite">
-          <span class="count">{{ postCount }}개 게시글</span>
-        </div>
+       
       </div>
     </div>
 
@@ -53,62 +51,15 @@ const showChat = ref(false)
 const selectedRegion = ref('')
 const regions = ref([])
 
-function getPostCount() {
-  try {
-    const raw = localStorage.getItem('localhub_posts')
-    if (!raw) return 0
-    const arr = JSON.parse(raw)
-    return Array.isArray(arr) ? arr.length : 0
-  } catch (e) {
-    console.error('getPostCount parse error:', e)
-    return 0
-  }
-}
 
-const postCount = ref(getPostCount())
 
-function refreshPostCount() {
-  postCount.value = getPostCount()
-}
 
 function loadRegions() {
-  try {
-    const set = new Set()
-
-    const rawPlaces = localStorage.getItem('localhub_places_lite')
-    if (rawPlaces) {
-      const places = JSON.parse(rawPlaces)
-      if (Array.isArray(places)) {
-        places.forEach(p => {
-          if (p.region) set.add(String(p.region).trim())
-          else if (p.address) {
-            const addr = String(p.address)
-            const m1 = addr.match(/서울(?:특별시)?\s*([^구]+구)/)
-            const m2 = addr.match(/([^구]+구)/)
-            if (m1) set.add(m1[1].trim())
-            else if (m2) set.add(m2[1].trim())
-          }
-        })
-      }
-    }
-
-    const rawPosts = localStorage.getItem('localhub_posts')
-    if (rawPosts) {
-      const posts = JSON.parse(rawPosts)
-      if (Array.isArray(posts)) {
-        posts.forEach(p => {
-          const r = p?.placeInfo?.region || p?.placeInfo?.regionName
-          if (r) set.add(String(r).trim())
-        })
-      }
-    }
-
-    const arr = [...set].filter(Boolean).sort((a, b) => a.localeCompare(b, 'ko'))
-    regions.value = arr.length ? arr : ['종로구', '중구', '강남구', '영등포구', '노원구']
-  } catch (e) {
-    console.error('loadRegions error:', e)
-    regions.value = ['종로구', '중구', '강남구', '영등포구', '노원구']
-  }
+  regions.value = [
+    '강남구','강동구','강북구','강서구','관악구','광진구','구로구','금천구',
+    '노원구','도봉구','동대문구','동작구','마포구','서대문구','서초구','성동구',
+    '성북구','송파구','양천구','영등포구','용산구','은평구','종로구','중구','중랑구'
+  ]
 }
 
 function loadSavedRegion() {
@@ -145,31 +96,21 @@ function toggleChat() {
 function onStorageEvent(e) {
   // storage event fires on other windows/tabs; check relevant keys
   if (!e) return
-  if (e.key === 'localhub_posts') refreshPostCount()
   if (e.key === 'localhub_places_lite') loadRegions()
   if (e.key === 'localhub_settings') loadSavedRegion()
 }
 
 function onCustomPostsUpdate() {
-  // other components should dispatch `localhub_posts_updated` in same tab after CRUD
-  refreshPostCount()
-  loadRegions()
+  // 게시글 카운트 UI 제거로 인해 현재 특별 처리 없음.
 }
 
 onMounted(() => {
   loadRegions()
   loadSavedRegion()
-  refreshPostCount()
-
-  window.addEventListener('storage', onStorageEvent)
-  window.addEventListener('localhub_posts_updated', onCustomPostsUpdate)
-  window.addEventListener('localhub_places_updated', loadRegions)
 })
 
 onBeforeUnmount(() => {
-  window.removeEventListener('storage', onStorageEvent)
-  window.removeEventListener('localhub_posts_updated', onCustomPostsUpdate)
-  window.removeEventListener('localhub_places_updated', loadRegions)
+  // no-op: no post-related listeners to cleanup
 })
 </script>
 
