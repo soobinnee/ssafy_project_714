@@ -94,8 +94,6 @@ onBeforeUnmount(() => {
 <style scoped>
 .district-map-chart {
   width: 100%;
-  max-width: 700px;
-  margin: 0 auto;
 }
 .map-container {
   width: 100%;
