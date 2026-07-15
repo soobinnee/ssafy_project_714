@@ -1,17 +1,32 @@
 import { STORAGE_KEYS } from '@/utils/storageKeys'
 
 /**
+ * 샘플/레거시 데이터의 카테고리 이름을 표준 이름으로 매핑
+ * (예: '관광' -> '관광지')
+ */
+const CATEGORY_ALIAS = {
+  '관광': '관광지'
+}
+
+/**
  * 샘플 데이터 등 placeInfo가 없는 게시글을 표준 구조로 정규화
  * (category, district 같은 flat 필드를 placeInfo.category / placeInfo.region으로 변환)
  */
 function normalizePost(post) {
   if (!post.placeInfo) {
+    const rawCategory = post.category || '기타'
     post.placeInfo = {
       contentid: post.contentid || null,
       title: post.location?.address || post.title || '',
       region: post.district || '정보없음',
-      category: post.category || '기타'
+      category: CATEGORY_ALIAS[rawCategory] || rawCategory
     }
+  } else if (post.placeInfo.category) {
+    // placeInfo가 이미 있어도 레거시 이름이 들어있을 수 있으니 한 번 더 매핑
+    post.placeInfo.category = CATEGORY_ALIAS[post.placeInfo.category] || post.placeInfo.category
+  }
+  if (!post.author) {
+    post.author = '익명'
   }
   return post
 }
@@ -79,6 +94,7 @@ export function addPost(data) {
     title: data.title,
     content: data.content,
     password: data.password,
+    author: data.author?.trim() || '익명',
     placeInfo: data.placeInfo, // { contentid, title, region, category }
     views: 0,
     likes: 0,
@@ -103,6 +119,7 @@ export function updatePost(id, password, data) {
     ...posts[index],
     title: data.title,
     content: data.content,
+    author: data.author?.trim() || posts[index].author || '익명',
     placeInfo: data.placeInfo || posts[index].placeInfo
   }
   savePosts(posts)

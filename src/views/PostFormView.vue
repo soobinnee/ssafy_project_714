@@ -20,6 +20,11 @@
       </label>
 
       <label>
+        작성자 (선택, 비워두면 '익명'으로 등록)
+        <input type="text" v-model="form.author" maxlength="20" placeholder="익명" />
+      </label>
+
+      <label>
         내용
         <textarea v-model="form.content" rows="8" required></textarea>
       </label>
@@ -30,20 +35,18 @@
       </label>
 
       <fieldset>
-        <legend>장소 정보 (선택)</legend>
-        <label>
-          contentid
-          <input type="text" v-model="form.placeInfo.contentid" />
-        </label>
+        <legend>장소 정보 (필수)</legend>
         <label>
           장소명
-          <input type="text" v-model="form.placeInfo.title" />
+          <input type="text" v-model="form.placeInfo.title" required />
         </label>
         <label>
-          지역 (예: 노원구)
-          <input type="text" v-model="form.placeInfo.region" />
+          지역
+          <select v-model="form.placeInfo.region" required>
+            <option value="">선택</option>
+            <option v-for="r in regions" :key="r" :value="r">{{ r }}</option>
+          </select>
         </label>
-        <small>※ 장소 정보를 모르면 비워두어도 됩니다.</small>
       </fieldset>
 
       <div class="actions">
@@ -71,14 +74,20 @@ const inputPassword = ref('')
 const error = ref('')
 const success = ref('')
 
+const regions = [
+  '강남구', '강동구', '강북구', '강서구', '관악구', '광진구', '구로구', '금천구',
+  '노원구', '도봉구', '동대문구', '동작구', '마포구', '서대문구', '서초구', '성동구',
+  '성북구', '송파구', '양천구', '영등포구', '용산구', '은평구', '종로구', '중구', '중랑구'
+]
+
 const form = reactive({
   title: '',
   content: '',
+  author: '',
   placeInfo: {
-    contentid: '',
     title: '',
     region: '',
-    category: route.params.category || ''
+    category: route.query.category || ''
   }
 })
 
@@ -91,8 +100,8 @@ function loadDraft() {
     const d = JSON.parse(raw)
     form.title = d.title || ''
     form.content = d.content || ''
+    form.author = d.author || ''
     if (d.placeInfo) {
-      form.placeInfo.contentid = d.placeInfo.contentid || ''
       form.placeInfo.title = d.placeInfo.title || ''
       form.placeInfo.region = d.placeInfo.region || ''
       form.placeInfo.category = d.placeInfo.category || form.placeInfo.category
@@ -105,6 +114,7 @@ function saveDraft() {
     const d = {
       title: form.title,
       content: form.content,
+      author: form.author,
       placeInfo: form.placeInfo,
       lastSavedAt: Date.now()
     }
@@ -123,11 +133,11 @@ onMounted(() => {
     }
     form.title = post.title
     form.content = post.content
+    form.author = post.author || ''
     form.placeInfo = {
-      contentid: post.placeInfo?.contentid || '',
       title: post.placeInfo?.title || '',
       region: post.placeInfo?.region || '',
-      category: post.placeInfo?.category || route.params.category || ''
+      category: post.placeInfo?.category || ''
     }
     // editing: don't autofill password
   } else {
@@ -148,6 +158,18 @@ async function onSubmit() {
     error.value = '제목과 내용을 입력해 주세요.'
     return
   }
+  if (!form.placeInfo.category) {
+    error.value = '카테고리를 선택해 주세요.'
+    return
+  }
+  if (!form.placeInfo.title.trim()) {
+    error.value = '장소명을 입력해 주세요.'
+    return
+  }
+  if (!form.placeInfo.region) {
+    error.value = '지역을 선택해 주세요.'
+    return
+  }
   if (!inputPassword.value || inputPassword.value.length < 4) {
     error.value = '비밀번호는 4자 이상 입력해 주세요.'
     return
@@ -157,6 +179,7 @@ async function onSubmit() {
     const ok = updatePost(id, inputPassword.value, {
       title: form.title,
       content: form.content,
+      author: form.author,
       placeInfo: { ...form.placeInfo }
     })
     if (!ok) {
@@ -166,19 +189,21 @@ async function onSubmit() {
     localStorage.removeItem(DRAFT_KEY)
     success.value = '게시글이 수정되었습니다.'
     setTimeout(() => {
-      router.replace({ name: 'PostDetail', params: { category: form.placeInfo.category || route.params.category || '전체', id } })
+      router.replace({ name: 'post-detail', params: { id } })
     }, 600)
   } else {
     const newPost = addPost({
       title: form.title,
       content: form.content,
       password: inputPassword.value,
+      author: form.author,
       placeInfo: { ...form.placeInfo }
     })
     localStorage.removeItem(DRAFT_KEY)
     success.value = '게시글이 등록되었습니다.'
     setTimeout(() => {
-      router.replace({ name: 'PostDetail', params: { category: newPost.placeInfo.category || route.params.category || '전체', id: newPost.id } })
+      // 등록 후에는 상세/카테고리 페이지가 아니라 전체 게시판으로 바로 이동
+      router.replace({ name: 'board-list' })
     }, 600)
   }
 }

@@ -2,8 +2,8 @@
   <div class="board-list-view">
     <!-- 헤더 -->
     <div class="board-header">
-      <h1>{{ category || '전체' }} 게시판</h1>
-      <router-link :to="{ name: 'post-write', params: { category } }" class="btn-write">
+      <h1>{{ category ? `${category} 게시판` : '전체 게시판' }}</h1>
+      <router-link :to="{ name: 'post-write', params: { category: category || '관광지' } }" class="btn-write">
         ✏️ 글 작성
       </router-link>
     </div>
@@ -83,51 +83,53 @@ export default {
     const route = useRoute()
     const { getPosts } = usePosts()
 
-    const category = ref(route.params.category || null)
+    // category가 없으면 전체 게시판(빈 문자열로 취급)
+    const category = ref(route.params.category || '')
     const searchQuery = ref('')
     const selectedRegion = ref('')
     const currentPage = ref(1)
     const postsPerPage = 10
 
-    // route.params 변경에 반응하도록 sync
-    watch(() => route.params.category, (v) => {
-      category.value = v || null
-      currentPage.value = 1
-    })
+    // 필터링된 게시글
+    const filteredPosts = computed(() => {
+      let posts = getPosts()
 
-    const normalize = s => String(s || '').trim().toLowerCase().replace(/\s+/g, ' ')
-
-    const filteredPostsRaw = computed(() => {
-      let posts = getPosts() || []
-      const activeCat = normalize(category.value)
-
-      if (activeCat) {
-        posts = posts.filter(p => normalize(p.placeInfo?.category) === activeCat)
+      // 1. 카테고리 필터 (category가 없으면 전체 게시글 대상)
+      if (category.value) {
+        posts = posts.filter(p => 
+          p.placeInfo && p.placeInfo.category === category.value
+        )
       }
 
+      // 2. 지역 필터
       if (selectedRegion.value) {
-        const regionNorm = normalize(selectedRegion.value)
-        posts = posts.filter(p => normalize(p.placeInfo?.region) === regionNorm)
+        posts = posts.filter(p => 
+          p.placeInfo && p.placeInfo.region === selectedRegion.value
+        )
       }
 
+      // 3. 검색어 필터
       if (searchQuery.value) {
-        const q = normalize(searchQuery.value)
+        const query = searchQuery.value.toLowerCase()
         posts = posts.filter(p =>
-          normalize(p.title).includes(q) ||
-          normalize(p.content).includes(q) ||
-          normalize(p.placeInfo?.title).includes(q)
+          p.title.toLowerCase().includes(query) ||
+          p.content.toLowerCase().includes(query) ||
+          (p.placeInfo && p.placeInfo.title.toLowerCase().includes(query))
         )
       }
 
       return posts
     })
 
-    const totalPages = computed(() => Math.ceil(filteredPostsRaw.value.length / postsPerPage))
+    // 페이지네이션
+    const totalPages = computed(() => 
+      Math.ceil(filteredPosts.value.length / postsPerPage)
+    )
 
     const paginatedPosts = computed(() => {
       const start = (currentPage.value - 1) * postsPerPage
       const end = start + postsPerPage
-      return filteredPostsRaw.value.slice(start, end)
+      return filteredPosts.value.slice(start, end)
     })
 
     const handleSearch = (query) => {
@@ -135,14 +137,18 @@ export default {
       currentPage.value = 1
     }
 
+    // ✅ 개선: selectedRegion 변경 시 currentPage 초기화
     watch(() => selectedRegion.value, () => {
       currentPage.value = 1
     })
 
     const handlePostSelect = (postId) => {
+      const posts = getPosts()
+      const post = posts.find(p => p.id === postId)
+      const targetCategory = post?.placeInfo?.category || category.value || '관광지'
       router.push({
         name: 'post-detail',
-        params: { category: category.value || '', id: postId }
+        params: { category: targetCategory, id: postId }
       })
     }
 
