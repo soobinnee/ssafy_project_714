@@ -2,8 +2,8 @@
   <div class="board-list-view">
     <!-- 헤더 -->
     <div class="board-header">
-      <h1>{{ category ? `${category} 게시판` : '전체 게시판' }}</h1>
-      <router-link :to="{ name: 'post-write', params: { category: category || '관광지' } }" class="btn-write">
+      <h1 class="board-title" @click="resetToAll">{{ pageTitle }}</h1>
+      <router-link :to="{ name: 'post-write', query: { category: category || undefined } }" class="btn-write">
         ✏️ 글 작성
       </router-link>
     </div>
@@ -83,10 +83,11 @@ export default {
     const route = useRoute()
     const { getPosts } = usePosts()
 
-    // category가 없으면 전체 게시판(빈 문자열로 취급)
-    const category = ref(route.params.category || '')
+    // category가 없으면 전체 게시판(빈 문자열로 취급) - 라우트가 바뀔 때마다 실시간 반영
+    const category = computed(() => route.params.category || '')
     const searchQuery = ref('')
-    const selectedRegion = ref('')
+    // 지도에서 지역 클릭으로 넘어온 경우 쿼리의 region 값을 초기 필터로 사용
+    const selectedRegion = ref(route.query.region || '')
     const currentPage = ref(1)
     const postsPerPage = 10
 
@@ -142,33 +143,48 @@ export default {
       currentPage.value = 1
     })
 
+    // ✅ 개선: 라우트(카테고리)가 바뀔 때도 페이지 초기화
+    watch(() => category.value, () => {
+      currentPage.value = 1
+    })
+
     // clear search when route path/name changes so header/menu -> 전체 works
-    watch(() => route.fullPath, (newPath, oldPath) => {
-      // if navigating to this board-list view (any category or none), clear search
+    watch(() => route.fullPath, () => {
       if (router.currentRoute.value?.name === 'board-list') {
         searchQuery.value = ''
         currentPage.value = 1
       }
     })
 
+    // 카테고리가 있으면 카테고리명, 없고 지역만 있으면 지역명, 둘 다 없으면 전체
+    const pageTitle = computed(() => {
+      if (category.value) return `${category.value} 게시판`
+      if (selectedRegion.value) return `${selectedRegion.value} 게시판`
+      return '전체 게시판'
+    })
+
     const handlePostSelect = (postId) => {
-      const posts = getPosts()
-      const post = posts.find(p => p.id === postId)
-      const targetCategory = post?.placeInfo?.category || category.value || '관광지'
-      router.push({
-        name: 'post-detail',
-        params: { category: targetCategory, id: postId }
-      })
+      router.push({ name: 'post-detail', params: { id: postId } })
+    }
+
+    // 제목 클릭 시 검색어/지역 필터 초기화하고 전체 게시판으로 이동
+    const resetToAll = () => {
+      searchQuery.value = ''
+      selectedRegion.value = ''
+      currentPage.value = 1
+      router.push({ name: 'board-list' })
     }
 
     return {
       category,
+      pageTitle,
       selectedRegion,
       currentPage,
       totalPages,
       filteredPosts: paginatedPosts,
       handleSearch,
-      handlePostSelect
+      handlePostSelect,
+      resetToAll
     }
   }
 }
@@ -193,6 +209,7 @@ export default {
   font-size: 28px;
   font-weight: bold;
   color: #333;
+  cursor: pointer;
 }
 
 .btn-write {
