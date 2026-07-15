@@ -18,7 +18,7 @@
           @click="handleSelectPost(post.id)"
           class="post-row"
         >
-          <td class="col-number">{{ posts.length - index }}</td>
+          <td class="col-number">{{ index + 1 }}</td>
           <td class="col-title">{{ post.title }}</td>
           <td class="col-author">{{ post.author }}</td>
           <td class="col-date">{{ formatDate(post.createdAt) }}</td>
@@ -146,13 +146,15 @@ export default {
   text-align: center;
 }
 
-/* 제목 스타일 */
-.post-table .col-title {
-  color: #007bff;
-  font-weight: 500;
+
+/* 제목 스타일 - 기본은 번호와 동일 (td에만 적용, th 헤더는 제외) */
+.post-table tbody td.col-title {
+  color: #666;
+  font-weight: normal;
 }
 
-.post-table tbody tr:hover .col-title {
+.post-table tbody tr:hover td.col-title {
+  font-weight: 600;
   text-decoration: underline;
 }
 

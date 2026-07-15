@@ -1,11 +1,5 @@
 export const STORAGE_KEYS = {
-  POSTS: 'localhub_posts',
-  PLACES_LITE: 'localhub_places_lite',
-  CHAT_HISTORY: 'localhub_chat_history',
+  POSTS: 'posts',
   USER_LIKES: 'localhub_user_likes',
-  DASHBOARD_STATS: 'localhub_dashboard_stats',
-  POST_DRAFT: 'localhub_post_draft',
-  COMMENTS: 'localhub_comments'
+  DASHBOARD_STATS: 'localhub_dashboard_stats'
 }
-
-export default STORAGE_KEYS
