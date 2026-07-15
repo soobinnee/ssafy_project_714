@@ -1,0 +1,32 @@
+[
+  {
+    "id": "e1",
+    "title": "한강 여름 음악제",
+    "start": "2026-07-20",
+    "end": "2026-07-21",
+    "allDay": true,
+    "category": "축제",
+    "description": "무료 콘서트, 가족 단위 추천",
+    "location": { "lat": 37.5172, "lng": 127.0473, "address": "한강공원" }
+  },
+  {
+    "id": "e2",
+    "title": "자치구 전통시장 축제",
+    "start": "2026-08-05T10:00:00",
+    "end": "2026-08-05T18:00:00",
+    "allDay": false,
+    "category": "행사",
+    "description": "체험 부스 다수, 현장판매",
+    "location": { "lat": 37.5600, "lng": 126.9750, "address": "서울특별시 종로구 전통시장" }
+  },
+  {
+    "id": "e3",
+    "title": "단기 전시 - 현대미술 모음",
+    "start": "2026-07-10",
+    "end": "2026-07-30",
+    "allDay": true,
+    "category": "전시",
+    "description": "유료/할인 정보 포함",
+    "location": { "lat": 37.5720, "lng": 126.9768, "address": "시립미술관" }
+  }
+]
