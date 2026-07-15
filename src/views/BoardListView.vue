@@ -153,6 +153,8 @@ export default {
       if (router.currentRoute.value?.name === 'board-list') {
         searchQuery.value = ''
         currentPage.value = 1
+        // ✅ 지역 필터도 URL의 region 쿼리 값과 동기화 (메뉴 클릭 시 초기화되도록)
+        selectedRegion.value = route.query.region || ''
       }
     })
 

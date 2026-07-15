@@ -23,7 +23,7 @@ function colorFor(count) {
 function opacityFor(count, max) {
   if (!count) return 0.6
   const ratio = max > 0 ? count / max : 0
-  return 0.65 + ratio * 0.35
+  return 0.3 + ratio * 0.7
 }
 
 async function drawMap() {
