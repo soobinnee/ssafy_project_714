@@ -73,6 +73,12 @@ async function drawMap() {
 
   map.fitBounds(geoLayer.getBounds(), { padding: [0, 0] })
   map.setZoom(map.getZoom())
+
+  // 컨테이너 크기가 바뀌어도 지도가 다시 중앙/사이즈를 맞추도록
+  setTimeout(() => {
+    map.invalidateSize()
+    map.fitBounds(geoLayer.getBounds(), { padding: [0, 0] })
+  }, 100)
 }
 
 onMounted(drawMap)
@@ -88,10 +94,12 @@ onBeforeUnmount(() => {
 <style scoped>
 .district-map-chart {
   width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
 }
 .map-container {
   width: 100%;
-  height: 600px;
+  height: 550px;
   border-radius: 8px;
   overflow: hidden;
 }
