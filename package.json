@@ -1,0 +1,14 @@
+{
+  "name": "ssafy_project_714",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:ui": "vitest --ui"
+  },
+  "devDependencies": {
+    "@vue/test-utils": "^2.4.11",
+    "vitest": "^4.1.10"
+  }
+}
