@@ -1,10 +1,27 @@
 import { STORAGE_KEYS } from '@/utils/storageKeys'
 
+/**
+ * 샘플 데이터 등 placeInfo가 없는 게시글을 표준 구조로 정규화
+ * (category, district 같은 flat 필드를 placeInfo.category / placeInfo.region으로 변환)
+ */
+function normalizePost(post) {
+  if (!post.placeInfo) {
+    post.placeInfo = {
+      contentid: post.contentid || null,
+      title: post.location?.address || post.title || '',
+      region: post.district || '정보없음',
+      category: post.category || '기타'
+    }
+  }
+  return post
+}
+
 function loadPosts() {
   const raw = localStorage.getItem(STORAGE_KEYS.POSTS)
   if (!raw) return []
   try {
-    return JSON.parse(raw)
+    const posts = JSON.parse(raw)
+    return posts.map(normalizePost)
   } catch {
     return []
   }
@@ -182,17 +199,10 @@ export function refreshDashboardStats() {
 }
 
 /**
- * 캐싱된 대시보드 통계 조회 (없으면 즉시 계산해서 생성)
+ * 대시보드 통계 조회 (항상 최신 게시글 기준으로 재계산)
+ * - 시드/직접 조작 등으로 posts가 바뀌어도 항상 정확한 값을 보장하기 위해 캐시에 의존하지 않음
  */
 export function getDashboardStats() {
-  const raw = localStorage.getItem(STORAGE_KEYS.DASHBOARD_STATS)
-  if (raw) {
-    try {
-      return JSON.parse(raw)
-    } catch {
-      // 손상 시 재계산
-    }
-  }
   return refreshDashboardStats()
 }
 
