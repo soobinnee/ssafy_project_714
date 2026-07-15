@@ -1,11 +1,13 @@
 <template>
   <div class="home-view">
-    <!-- 배너 -->
-    <HomeBanner 
-      title="LocalHub"
-      subtitle="서울의 숨은 보석을 발견하세요"
-      backgroundImage="https://images.unsplash.com/photo-1518235506717-e1ed3306a326?w=1200&h=400&fit=crop"
-    />
+    <!-- 타이틀 + 지역별 게시글 분포 지도 -->
+    <section class="map-section">
+      <div class="home-hero">
+        <h1>LocalHub</h1>
+        <p>서울의 숨은 보석을 발견하세요</p>
+      </div>
+      <DistrictMapChart />
+    </section>
 
     <!-- 카테고리 선택 -->
     <section class="category-section">
@@ -33,7 +35,7 @@
       </div>
       <div v-else class="empty-state">
         <p>아직 등록된 게시글이 없습니다.</p>
-        <router-link :to="{ name: 'post-write', params: { category: '관광지' } }" class="btn-primary">
+        <router-link :to="{ name: 'post-write', query: { category: '관광지' } }" class="btn-primary">
           첫 번째 게시글 작성하기
         </router-link>
       </div>
@@ -42,7 +44,7 @@
 </template>
 
 <script>
-import HomeBanner from '../components/home/HomeBanner.vue'
+import DistrictMapChart from '../components/dashboard/DistrictMapChart.vue'
 import CategoryCard from '../components/home/CategoryCard.vue'
 import PostTable from '../components/board/PostTable.vue'
 import { usePosts } from '../composables/usePosts'
@@ -51,7 +53,7 @@ import { useRouter } from 'vue-router'
 export default {
   name: 'HomeView',
   components: {
-    HomeBanner,
+    DistrictMapChart,
     CategoryCard,
     PostTable
   },
@@ -73,19 +75,8 @@ export default {
       router.push({ name: 'board-list', params: { category } })
     }
 
-    // ✅ 개선: placeInfo 없을 때 기본값 설정
     const handlePostSelect = (postId) => {
-      const post = getPosts().find(p => p.id === postId)
-      if (post) {
-        const category = post.placeInfo?.category || '관광지'
-        router.push({
-          name: 'post-detail',
-          params: { 
-            category,
-            id: postId
-          }
-        })
-      }
+      router.push({ name: 'post-detail', params: { id: postId } })
     }
 
     return {
@@ -102,6 +93,31 @@ export default {
 .home-view {
   min-height: 100vh;
   background: #f5f5f5;
+}
+
+/* 지도 섹션 */
+.map-section {
+  padding: 30px 20px 10px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.home-hero {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.home-hero h1 {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1a3358;
+  margin: 0 0 8px;
+}
+
+.home-hero p {
+  font-size: 16px;
+  color: #666;
+  margin: 0;
 }
 
 /* 카테고리 섹션 */
