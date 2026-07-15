@@ -12,13 +12,14 @@
           @delete="showPasswordModal = true"
         />
 
-        <!-- 비밀번호 확인 모달 -->
+        <!-- 비밀번호 확인 모달 (삭제 클릭했을 때만 표시) -->
         <PasswordConfirmModal
-          :isOpen="showPasswordModal"
-          title="삭제 확인"
-          message="정말 이 게시글을 삭제하시겠습니까?"
-          @confirm="handleDeleteConfirm"
-          @cancel="showPasswordModal = false"
+          v-if="showPasswordModal"
+          :postId="Number(route.params.id)"
+          :category="category"
+          mode="delete"
+          @close="showPasswordModal = false"
+          @deleted="handleDeleteConfirm"
         />
       </div>
       <div v-else class="loading">
@@ -45,10 +46,10 @@ export default {
   setup() {
     const router = useRouter()
     const route = useRoute()
-    const { getPostById, increaseViews, checkPassword, deletePost } = usePosts()
+    const { getPostById, increaseViews } = usePosts()
 
     const post = ref(null)
-    const isAuthor = ref(true)  // ✅ 개선: true로 설정 (모든 사용자가 비밀번호로 권한 확인)
+    const isAuthor = ref(true)  // 모든 사용자가 비밀번호로 권한 확인
     const showPasswordModal = ref(false)
     const category = ref(route.params.category)
 
@@ -57,7 +58,6 @@ export default {
       post.value = getPostById(postId)
 
       if (post.value) {
-        // 조회수 증가
         increaseViews(postId)
       }
     })
@@ -69,28 +69,13 @@ export default {
       })
     }
 
-    const handleDeleteConfirm = (password) => {
-      try {
-        const postId = Number(route.params.id)
-        
-        // 비밀번호 확인
-        if (!checkPassword(postId, password)) {
-          alert('비밀번호가 일치하지 않습니다.')
-          return
-        }
-
-        // 삭제 실행
-        deletePost(postId, password)
-        alert('게시글이 삭제되었습니다.')
-        router.push({
-          name: 'board-list',
-          params: { category: category.value }
-        })
-      } catch (error) {
-        alert('삭제 중 오류가 발생했습니다: ' + error.message)
-      } finally {
-        showPasswordModal.value = false
-      }
+    // 모달 내부에서 비밀번호 확인 및 삭제까지 처리 완료 후 호출됨
+    const handleDeleteConfirm = () => {
+      alert('게시글이 삭제되었습니다.')
+      router.push({
+        name: 'board-list',
+        params: { category: category.value }
+      })
     }
 
     const handleBack = () => {
@@ -101,8 +86,10 @@ export default {
     }
 
     return {
+      route,
       post,
       isAuthor,
+      category,
       showPasswordModal,
       handleEdit,
       handleDeleteConfirm,
