@@ -23,8 +23,16 @@ let chart = null
 let refreshTimer = null
 
 const CHART_COLORS = [
-  '#60a5fa','#f472b6','#34d399','#fbbf24','#a78bfa',
-  '#fb7185','#60c9ff','#f59e0b','#94a3b8','#7c3aed'
+  '#B8D4E8', // 파스텔 블루
+  '#F0C4C4', // 파스텔 핑크
+  '#C5DFC8', // 파스텔 그린
+  '#F2DDB0', // 파스텔 옐로우
+  '#D4C5E8', // 파스텔 라벤더
+  '#F0D4C4', // 파스텔 피치
+  '#C4DCE0', // 파스텔 민트
+  '#E0C4D4', // 파스텔 로즈
+  '#D8D4C4', // 파스텔 베이지
+  '#C4D4E0'  // 파스텔 스카이
 ]
 
 const lastUpdated = ref(null)
@@ -57,6 +65,7 @@ function renderChart() {
   if (chart) {
     chart.data.labels = labels.value
     chart.data.datasets[0].data = values.value
+    chart.data.datasets[0].backgroundColor = labels.value.map((_, i) => CHART_COLORS[i % CHART_COLORS.length])
     chart.update()
     return
   }
@@ -74,7 +83,7 @@ function renderChart() {
     },
     options: {
       indexAxis: 'y',
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.parsed}` } } },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.parsed.x}` } } },
       maintainAspectRatio: false,
       scales: {
         x: { beginAtZero: true, ticks: { precision: 0 } },

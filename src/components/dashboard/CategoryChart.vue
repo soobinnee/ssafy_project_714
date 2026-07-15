@@ -12,15 +12,24 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import Chart from 'chart.js/auto'
 import { getDashboardStats } from '@/composables/usePosts'
 
+const router = useRouter()
 const canvasEl = ref(null)
 let chart = null
 let refreshTimer = null
 
 const CHART_COLORS = [
-  '#60a5fa','#f472b6','#34d399','#fbbf24','#a78bfa','#fb7185','#60c9ff','#f59e0b'
+  '#B8D4E8', // 파스텔 블루
+  '#F0C4C4', // 파스텔 핑크
+  '#C5DFC8', // 파스텔 그린
+  '#F2DDB0', // 파스텔 옐로우
+  '#D4C5E8', // 파스텔 라벤더
+  '#F0D4C4', // 파스텔 피치
+  '#C4DCE0', // 파스텔 민트
+  '#E0C4D4'  // 파스텔 로즈
 ]
 
 function formatDate(ts) {
@@ -56,7 +65,8 @@ function buildChart() {
       datasets: [{
         data,
         backgroundColor: labels.map((_, i) => CHART_COLORS[i % CHART_COLORS.length]),
-        borderWidth: 0
+        borderWidth: 2,
+        borderColor: '#ffffff'
       }]
     },
     options: {
@@ -64,7 +74,16 @@ function buildChart() {
         legend: { position: 'bottom', labels: { boxWidth: 12, padding: 8 } },
         tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.parsed}` } }
       },
-      maintainAspectRatio: false
+      maintainAspectRatio: false,
+      onHover: (event, elements) => {
+        event.native.target.style.cursor = elements.length ? 'pointer' : 'default'
+      },
+      onClick: (event, elements) => {
+        if (!elements.length) return
+        const index = elements[0].index
+        const category = chart.data.labels[index]
+        router.push({ name: 'board-list', params: { category } })
+      }
     }
   })
 }
