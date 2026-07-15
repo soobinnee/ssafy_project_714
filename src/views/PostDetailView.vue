@@ -79,10 +79,8 @@ export default {
     }
 
     const handleBack = () => {
-      router.push({
-        name: 'board-list',
-        params: { category: category.value }
-      })
+      // 전체 게시판으로 이동 (카테고리 파라미터 제거)
+      router.push({ name: 'board-list' })
     }
 
     return {

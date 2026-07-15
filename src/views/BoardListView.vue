@@ -142,6 +142,15 @@ export default {
       currentPage.value = 1
     })
 
+    // clear search when route path/name changes so header/menu -> 전체 works
+    watch(() => route.fullPath, (newPath, oldPath) => {
+      // if navigating to this board-list view (any category or none), clear search
+      if (router.currentRoute.value?.name === 'board-list') {
+        searchQuery.value = ''
+        currentPage.value = 1
+      }
+    })
+
     const handlePostSelect = (postId) => {
       const posts = getPosts()
       const post = posts.find(p => p.id === postId)
