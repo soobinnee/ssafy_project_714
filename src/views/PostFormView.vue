@@ -203,7 +203,7 @@ async function onSubmit() {
     success.value = '게시글이 등록되었습니다.'
     setTimeout(() => {
       // 등록 후에는 상세/카테고리 페이지가 아니라 전체 게시판으로 바로 이동
-      router.replace({ name: 'board-list' })
+      router.replace({ path: '/board' })
     }, 600)
   }
 }

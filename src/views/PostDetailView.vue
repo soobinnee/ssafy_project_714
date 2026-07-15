@@ -79,8 +79,7 @@ export default {
     }
 
     const handleBack = () => {
-      // 전체 게시판으로 이동 (카테고리 파라미터 제거)
-      router.push({ name: 'board-list' })
+      router.push({ path: '/board' })
     }
 
     return {
