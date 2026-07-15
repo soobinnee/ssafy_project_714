@@ -6,10 +6,10 @@
       </div>
 
       <nav class="nav" role="navigation" aria-label="주요 링크">
-        <router-link :to="{ name: 'home' }">홈</router-link>
-        <router-link :to="{ name: 'dashboard' }">대시보드</router-link>
-        <router-link :to="{ name: 'board-list' }">게시판</router-link>
-        <router-link :to="{ name: 'post-write' }">글쓰기</router-link>
+        <a href="#" @click.prevent="navTo('home')">홈</a>
+        <a href="#" @click.prevent="navTo('dashboard')">대시보드</a>
+        <a href="#" @click.prevent="navTo('board-list')">게시판</a>
+        <a href="#" @click.prevent="navTo('post-write')">글쓰기</a>
       </nav>
 
       <div class="controls" role="region" aria-label="헤더 컨트롤">
@@ -102,6 +102,26 @@ function onStorageEvent(e) {
 
 function onCustomPostsUpdate() {
   // 게시글 카운트 UI 제거로 인해 현재 특별 처리 없음.
+}
+
+function navTo(name) {
+  const current = router.currentRoute.value?.name
+
+  // 게시판으로 갈 때는 명시적으로 경로(/board)를 사용해 category params 제거
+  if (name === 'board-list') {
+    if (current === name) {
+      router.replace({ path: '/board', query: { _r: Date.now() } }).catch(()=>{})
+    } else {
+      router.push({ path: '/board' }).catch(()=>{})
+    }
+    return
+  }
+
+  if (current === name) {
+    router.replace({ name, query: { _r: Date.now() } }).catch(()=>{})
+  } else {
+    router.push({ name }).catch(()=>{})
+  }
 }
 
 onMounted(() => {

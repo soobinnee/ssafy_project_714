@@ -79,10 +79,7 @@ export default {
     }
 
     const handleBack = () => {
-      router.push({
-        name: 'board-list',
-        params: { category: category.value }
-      })
+      router.push({ path: '/board' })
     }
 
     return {
