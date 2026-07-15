@@ -1,7 +1,7 @@
 <template>
   <div class="category-card" @click="handleSelect">
     <div class="card-image">
-      <img :src="icon" :alt="label" />
+      <span class="card-emoji">{{ icon }}</span>
     </div>
     <div class="card-label">{{ label }}</div>
   </div>
@@ -44,12 +44,14 @@ export default {
   aspect-ratio: 1;
   overflow: hidden;
   background: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.card-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.card-emoji {
+  font-size: 48px;
+  line-height: 1;
 }
 
 .card-label {
@@ -62,6 +64,10 @@ export default {
 
 /* 반응형 */
 @media (max-width: 480px) {
+  .card-emoji {
+    font-size: 36px;
+  }
+
   .card-label {
     padding: 10px;
     font-size: 13px;

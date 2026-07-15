@@ -203,3 +203,24 @@ export function getTopPosts(limit = 5) {
   const posts = loadPosts()
   return [...posts].sort((a, b) => b.views - a.views).slice(0, limit)
 }
+
+/**
+ * 통합 composable - 여러 뷰에서 필요한 함수들을 묶어서 제공
+ */
+export function usePosts() {
+  return {
+    getPosts,
+    getPostById,
+    searchPosts,
+    addPost,
+    updatePost,
+    deletePost,
+    checkPassword,
+    increaseViews,
+    toggleLike,
+    isLikedByMe,
+    getDashboardStats,
+    refreshDashboardStats,
+    getTopPosts
+  }
+}
