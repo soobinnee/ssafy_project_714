@@ -6,7 +6,10 @@
     <div class="form-group">
       <label>장소 검색</label>
       <div class="place-search-row">
-        <select v-model="categoryFilter">
+        <select
+          v-model="categoryFilter"
+          @change="handlePlaceSearch"
+        >
           <option value="">전체 카테고리</option>
           <option value="관광지">관광지</option>
           <option value="문화시설">문화시설</option>
