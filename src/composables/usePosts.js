@@ -1,0 +1,205 @@
+import { STORAGE_KEYS } from '@/utils/storageKeys'
+
+function loadPosts() {
+  const raw = localStorage.getItem(STORAGE_KEYS.POSTS)
+  if (!raw) return []
+  try {
+    return JSON.parse(raw)
+  } catch {
+    return []
+  }
+}
+
+function savePosts(posts) {
+  localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(posts))
+}
+
+function loadUserLikes() {
+  const raw = localStorage.getItem(STORAGE_KEYS.USER_LIKES)
+  return raw ? JSON.parse(raw) : []
+}
+
+function saveUserLikes(likedIds) {
+  localStorage.setItem(STORAGE_KEYS.USER_LIKES, JSON.stringify(likedIds))
+}
+
+/**
+ * 게시글 조회 (placeInfo.category 기준 필터)
+ */
+export function getPosts(category = null) {
+  const posts = loadPosts()
+  if (!category) return posts
+  return posts.filter(post => post.placeInfo?.category === category)
+}
+
+export function getPostById(id) {
+  const posts = loadPosts()
+  return posts.find(post => post.id === id) || null
+}
+
+/**
+ * 검색 (제목 + 내용 기준)
+ */
+export function searchPosts(keyword, category = null) {
+  const posts = getPosts(category)
+  if (!keyword) return posts
+  const lower = keyword.toLowerCase()
+  return posts.filter(
+    post =>
+      post.title.toLowerCase().includes(lower) ||
+      post.content.toLowerCase().includes(lower)
+  )
+}
+
+/**
+ * 게시글 등록
+ * @param {Object} data - { title, content, password, placeInfo: { contentid, title, region, category } }
+ */
+export function addPost(data) {
+  const posts = loadPosts()
+  const newPost = {
+    id: Date.now(), // 문서 스펙: number
+    title: data.title,
+    content: data.content,
+    password: data.password,
+    placeInfo: data.placeInfo, // { contentid, title, region, category }
+    views: 0,
+    likes: 0,
+    createdAt: Date.now()
+  }
+  posts.unshift(newPost)
+  savePosts(posts)
+  refreshDashboardStats()
+  return newPost
+}
+
+/**
+ * 게시글 수정 (비밀번호 확인 필수)
+ */
+export function updatePost(id, password, data) {
+  const posts = loadPosts()
+  const index = posts.findIndex(post => post.id === id)
+  if (index === -1) return false
+  if (posts[index].password !== password) return false
+
+  posts[index] = {
+    ...posts[index],
+    title: data.title,
+    content: data.content,
+    placeInfo: data.placeInfo || posts[index].placeInfo
+  }
+  savePosts(posts)
+  refreshDashboardStats()
+  return true
+}
+
+/**
+ * 게시글 삭제 (비밀번호 확인 필수)
+ */
+export function deletePost(id, password) {
+  const posts = loadPosts()
+  const index = posts.findIndex(post => post.id === id)
+  if (index === -1) return false
+  if (posts[index].password !== password) return false
+
+  posts.splice(index, 1)
+  savePosts(posts)
+  refreshDashboardStats()
+  return true
+}
+
+export function checkPassword(id, password) {
+  const post = getPostById(id)
+  if (!post) return false
+  return post.password === password
+}
+
+/**
+ * 조회수 증가
+ */
+export function increaseViews(id) {
+  const posts = loadPosts()
+  const index = posts.findIndex(post => post.id === id)
+  if (index === -1) return
+  posts[index].views += 1
+  savePosts(posts)
+}
+
+/**
+ * 좋아요 토글 (문서 4번: localhub_user_likes로 중복 방지)
+ * @returns {boolean} 토글 후 좋아요 상태 (true=좋아요 됨, false=취소됨)
+ */
+export function toggleLike(id) {
+  const posts = loadPosts()
+  const index = posts.findIndex(post => post.id === id)
+  if (index === -1) return false
+
+  const likedIds = loadUserLikes()
+  const alreadyLiked = likedIds.includes(id)
+
+  if (alreadyLiked) {
+    posts[index].likes = Math.max(0, posts[index].likes - 1)
+    saveUserLikes(likedIds.filter(likedId => likedId !== id))
+  } else {
+    posts[index].likes += 1
+    saveUserLikes([...likedIds, id])
+  }
+
+  savePosts(posts)
+  return !alreadyLiked
+}
+
+/**
+ * 이 브라우저가 해당 게시글에 좋아요를 눌렀는지 확인 (버튼 UI 상태 표시용)
+ */
+export function isLikedByMe(id) {
+  return loadUserLikes().includes(id)
+}
+
+/**
+ * 대시보드 통계 재계산 및 캐싱 (문서 5번 스펙)
+ * addPost/updatePost/deletePost 시 자동 호출됨
+ */
+export function refreshDashboardStats() {
+  const posts = loadPosts()
+  const byRegion = {}
+  const byCategory = {}
+
+  posts.forEach(post => {
+    const region = post.placeInfo?.region || '정보없음'
+    const category = post.placeInfo?.category || '기타'
+    byRegion[region] = (byRegion[region] || 0) + 1
+    byCategory[category] = (byCategory[category] || 0) + 1
+  })
+
+  const stats = {
+    lastUpdated: Date.now(),
+    byRegion,
+    byCategory
+  }
+  localStorage.setItem(STORAGE_KEYS.DASHBOARD_STATS, JSON.stringify(stats))
+  return stats
+}
+
+/**
+ * 캐싱된 대시보드 통계 조회 (없으면 즉시 계산해서 생성)
+ */
+export function getDashboardStats() {
+  const raw = localStorage.getItem(STORAGE_KEYS.DASHBOARD_STATS)
+  if (raw) {
+    try {
+      return JSON.parse(raw)
+    } catch {
+      // 손상 시 재계산
+    }
+  }
+  return refreshDashboardStats()
+}
+
+/**
+ * 조회수 기준 인기 게시글 TOP N
+ */
+export function getTopPosts(limit = 5) {
+  const posts = loadPosts()
+  return [...posts].sort((a, b) => b.views - a.views).slice(0, limit)
+}

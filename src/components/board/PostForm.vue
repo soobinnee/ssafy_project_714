@@ -1,366 +1,287 @@
 <template>
-  <form @submit.prevent="handleSubmit" class="post-form">
-    <!-- 제목 -->
-    <div class="form-group">
-      <label for="title">제목 *</label>
-      <input
-        id="title"
-        v-model="form.title"
-        type="text"
-        placeholder="게시글 제목을 입력하세요"
-        required
-      />
-      <span v-if="errors.title" class="error-message">{{ errors.title }}</span>
-    </div>
+  <div class="post-form">
+    <h2>{{ isEdit ? '게시글 수정' : '게시글 작성' }}</h2>
 
-    <!-- 작성자 -->
+    <!-- 1단계: 장소 선택 -->
     <div class="form-group">
-      <label for="author">작성자 *</label>
-      <input
-        id="author"
-        v-model="form.author"
-        type="text"
-        placeholder="이름을 입력하세요 (익명 가능)"
-        required
-      />
-      <span v-if="errors.author" class="error-message">{{ errors.author }}</span>
-    </div>
-
-    <!-- 비밀번호 -->
-    <div class="form-group">
-      <label for="password">비밀번호 * <span class="hint">(수정/삭제 시 필요)</span></label>
-      <input
-        id="password"
-        v-model="form.password"
-        type="password"
-        placeholder="비밀번호를 입력하세요"
-        required
-      />
-      <span v-if="errors.password" class="error-message">{{ errors.password }}</span>
-    </div>
-
-    <!-- 장소 정보 (선택사항) -->
-    <div class="form-group">
-      <label for="placeInfo">연관 장소 (선택사항)</label>
-      <div class="place-info-display" v-if="form.placeInfo">
-        <div class="place-tag">
-          <span>{{ form.placeInfo.title }} ({{ form.placeInfo.category }})</span>
-          <button type="button" @click="clearPlace" class="clear-btn">✕</button>
-        </div>
+      <label>장소 검색</label>
+      <div class="place-search-row">
+        <select v-model="categoryFilter">
+          <option value="">전체 카테고리</option>
+          <option value="관광지">관광지</option>
+          <option value="문화시설">문화시설</option>
+          <option value="레포츠">레포츠</option>
+          <option value="쇼핑">쇼핑</option>
+        </select>
+        <input
+          v-model="placeKeyword"
+          type="text"
+          placeholder="장소명을 검색하세요 (예: 경복궁)"
+          @input="handlePlaceSearch"
+        />
       </div>
-      <p v-else class="no-place">연관 장소를 선택하면 게시글에 추가됩니다</p>
+
+      <ul v-if="placeResults.length" class="place-result-list">
+        <li
+          v-for="place in placeResults"
+          :key="place.contentid"
+          @click="selectPlace(place)"
+          :class="{ selected: form.placeInfo?.contentid === place.contentid }"
+        >
+          <span class="place-title">{{ place.title }}</span>
+          <span class="place-address">{{ place.address }}</span>
+          <span class="place-category">{{ place.category }}</span>
+        </li>
+      </ul>
+
+      <div v-if="form.placeInfo" class="selected-place">
+        선택된 장소: <strong>{{ form.placeInfo.title }}</strong> ({{ form.placeInfo.region }} · {{ form.placeInfo.category }})
+        <button type="button" class="clear-btn" @click="clearPlace">변경</button>
+      </div>
     </div>
 
-    <!-- 내용 -->
+    <!-- 2단계: 게시글 내용 -->
     <div class="form-group">
-      <label for="content">내용 *</label>
-      <textarea
-        id="content"
-        v-model="form.content"
-        placeholder="게시글 내용을 입력하세요 (최소 10자)"
-        rows="8"
-        required
-      ></textarea>
-      <span v-if="errors.content" class="error-message">{{ errors.content }}</span>
-      <span class="char-count">{{ form.content.length }}/2000</span>
+      <label>제목</label>
+      <input v-model="form.title" type="text" placeholder="제목을 입력하세요" />
     </div>
 
-    <!-- 버튼 -->
-    <div class="form-actions">
-      <button
-        type="submit"
-        :disabled="!isFormValid"
-        class="btn-submit"
-      >
-        {{ isEditMode ? '수정하기' : '작성하기' }}
-      </button>
-      <button type="button" @click="handleCancel" class="btn-cancel">
-        취소
-      </button>
+    <div class="form-group">
+      <label>내용</label>
+      <textarea v-model="form.content" rows="8" placeholder="내용을 입력하세요"></textarea>
     </div>
-  </form>
+
+    <div class="form-group" v-if="!isEdit">
+      <label>수정용 비밀번호</label>
+      <input v-model="form.password" type="password" placeholder="숫자 4자리 이상" />
+    </div>
+    <p v-else class="hint">※ 수정·삭제는 등록 당시 비밀번호로 확인됩니다</p>
+
+    <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
+
+    <div class="form-actions">
+      <button @click="handleSubmit">{{ isEdit ? '수정' : '등록' }}</button>
+      <button @click="handleCancel">취소</button>
+    </div>
+  </div>
 </template>
 
-<script>
-export default {
-  name: 'PostForm',
-  props: {
-    post: {
-      type: Object,
-      default: null
+<script setup>
+import { reactive, ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { addPost, updatePost, getPostById } from '@/composables/usePosts'
+import { searchPlaces, extractDistrict } from '@/utils/placeData'
+
+const route = useRoute()
+const router = useRouter()
+
+const isEdit = computed(() => !!route.params.id)
+
+const form = reactive({
+  title: '',
+  content: '',
+  password: '',
+  placeInfo: null // { contentid, title, region, category }
+})
+
+const errorMessage = ref('')
+const placeKeyword = ref('')
+const categoryFilter = ref('')
+const placeResults = ref([])
+let editAuth = null // 수정 모드일 때 sessionStorage에서 꺼낸 비밀번호
+
+onMounted(() => {
+  if (isEdit.value) {
+    const existing = getPostById(Number(route.params.id))
+    if (existing) {
+      form.title = existing.title
+      form.content = existing.content
+      form.placeInfo = existing.placeInfo
     }
-  },
-  emits: ['submit', 'cancel'],
-  data() {
-    return {
-      form: {
-        title: '',
-        author: '',
-        password: '',
-        content: '',
-        placeInfo: null
-      },
-      errors: {}
-    }
-  },
-  computed: {
-    isEditMode() {
-      return !!this.post
-    },
-    isFormValid() {
-      return (
-        this.form.title.trim().length > 0 &&
-        this.form.author.trim().length > 0 &&
-        this.form.password.trim().length > 0 &&
-        this.form.content.trim().length >= 10 &&
-        this.form.content.length <= 2000
-      )
-    }
-  },
-  mounted() {
-    if (this.isEditMode) {
-      this.initializeFormWithExistingPost()
-    }
-  },
-  methods: {
-    initializeFormWithExistingPost() {
-      // 수정 모드: 기존 게시글 데이터로 폼 채우기
-      this.form = {
-        title: this.post.title || '',
-        author: this.post.author || '',
-        password: '', // 수정 시에는 비밀번호를 다시 입력받음
-        content: this.post.content || '',
-        placeInfo: this.post.placeInfo || null
-      }
-    },
-    validateForm() {
-      this.errors = {}
 
-      if (!this.form.title.trim()) {
-        this.errors.title = '제목을 입력하세요'
+    // PasswordConfirmModal에서 확인 후 넘어온 비밀번호 (한 번 쓰고 즉시 삭제)
+    const raw = sessionStorage.getItem('edit_auth')
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (parsed.postId === Number(route.params.id)) {
+        editAuth = parsed.password
       }
-
-      if (!this.form.author.trim()) {
-        this.errors.author = '작성자명을 입력하세요'
-      }
-
-      if (!this.form.password.trim()) {
-        this.errors.password = '비밀번호를 입력하세요'
-      }
-
-      if (!this.form.content.trim()) {
-        this.errors.content = '내용을 입력하세요'
-      } else if (this.form.content.trim().length < 10) {
-        this.errors.content = '내용은 최소 10자 이상이어야 합니다'
-      } else if (this.form.content.length > 2000) {
-        this.errors.content = '내용은 2000자를 초과할 수 없습니다'
-      }
-
-      return Object.keys(this.errors).length === 0
-    },
-    handleSubmit() {
-      if (this.validateForm()) {
-        const submitData = {
-          title: this.form.title.trim(),
-          author: this.form.author.trim(),
-          password: this.form.password,
-          content: this.form.content.trim(),
-          placeInfo: this.form.placeInfo
-        }
-        this.$emit('submit', submitData)
-      }
-    },
-    handleCancel() {
-      this.$emit('cancel')
-    },
-    clearPlace() {
-      this.form.placeInfo = null
+      sessionStorage.removeItem('edit_auth')
     }
   }
+})
+
+function handlePlaceSearch() {
+  if (!placeKeyword.value.trim()) {
+    placeResults.value = []
+    return
+  }
+  placeResults.value = searchPlaces(
+    placeKeyword.value,
+    categoryFilter.value || null
+  ).slice(0, 10) // 결과 너무 많지 않게 상위 10개만
+}
+
+function selectPlace(place) {
+  form.placeInfo = {
+    contentid: place.contentid,
+    title: place.title,
+    region: extractDistrict(place.address),
+    category: place.category
+  }
+  placeResults.value = []
+  placeKeyword.value = ''
+}
+
+function clearPlace() {
+  form.placeInfo = null
+}
+
+function validate() {
+  if (!form.placeInfo) {
+    errorMessage.value = '장소를 검색해서 선택해주세요.'
+    return false
+  }
+  if (!form.title.trim()) {
+    errorMessage.value = '제목을 입력해주세요.'
+    return false
+  }
+  if (!form.content.trim()) {
+    errorMessage.value = '내용을 입력해주세요.'
+    return false
+  }
+  if (!isEdit.value && (!form.password || form.password.length < 4)) {
+    errorMessage.value = '비밀번호는 숫자 4자리 이상 입력해주세요.'
+    return false
+  }
+  errorMessage.value = ''
+  return true
+}
+
+function handleSubmit() {
+  if (!validate()) return
+
+  if (isEdit.value) {
+    if (!editAuth) {
+      errorMessage.value = '비밀번호 확인 정보가 없습니다. 상세 페이지에서 다시 시도해주세요.'
+      return
+    }
+    const success = updatePost(Number(route.params.id), editAuth, {
+      title: form.title,
+      content: form.content,
+      placeInfo: form.placeInfo
+    })
+    if (!success) {
+      errorMessage.value = '비밀번호가 일치하지 않아 수정할 수 없습니다.'
+      return
+    }
+    router.push({ name: 'post-detail', params: { category: form.placeInfo.category, id: route.params.id } })
+  } else {
+    const newPost = addPost({
+      title: form.title,
+      content: form.content,
+      password: form.password,
+      placeInfo: form.placeInfo
+    })
+    router.push({ name: 'post-detail', params: { category: form.placeInfo.category, id: newPost.id } })
+  }
+}
+
+function handleCancel() {
+  router.back()
 }
 </script>
 
 <style scoped>
 .post-form {
-  max-width: 800px;
+  max-width: 600px;
   margin: 0 auto;
-  padding: 30px;
-  background: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
-
 .form-group {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
-
-label {
+.form-group label {
   display: block;
-  margin-bottom: 8px;
   font-weight: 600;
-  color: #333;
-  font-size: 14px;
+  margin-bottom: 4px;
 }
-
-.hint {
-  font-weight: 400;
-  color: #999;
-  font-size: 12px;
-}
-
-input[type="text"],
-input[type="password"],
-textarea {
+.form-group input,
+.form-group select,
+.form-group textarea {
   width: 100%;
-  padding: 12px;
-  border: 1px solid #ddd;
+  padding: 8px;
+  border: 1px solid #ccc;
   border-radius: 4px;
-  font-size: 14px;
-  font-family: inherit;
-  transition: border-color 0.2s, box-shadow 0.2s;
 }
-
-input[type="text"]:focus,
-input[type="password"]:focus,
-textarea:focus {
-  outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
-}
-
-textarea {
-  resize: vertical;
-  min-height: 200px;
-  line-height: 1.5;
-}
-
-.char-count {
-  display: block;
-  margin-top: 6px;
-  font-size: 12px;
-  color: #999;
-  text-align: right;
-}
-
-.error-message {
-  display: block;
-  margin-top: 6px;
-  font-size: 12px;
-  color: #dc3545;
-}
-
-.place-info-display {
-  padding: 12px;
-  background: #f0f7ff;
-  border: 1px solid #cce5ff;
-  border-radius: 4px;
-  margin-bottom: 12px;
-}
-
-.place-tag {
-  display: inline-flex;
-  align-items: center;
+.place-search-row {
+  display: flex;
   gap: 8px;
-  padding: 6px 12px;
-  background: #007bff;
-  color: white;
-  border-radius: 20px;
+}
+.place-search-row select {
+  width: 130px;
+  flex-shrink: 0;
+}
+.place-result-list {
+  list-style: none;
+  margin-top: 8px;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.place-result-list li {
+  display: flex;
+  gap: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 13px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.place-result-list li:hover,
+.place-result-list li.selected {
+  background: #f5f8ff;
+}
+.place-title {
+  font-weight: 600;
+}
+.place-address {
+  color: #888;
+  flex: 1;
+}
+.place-category {
+  color: #4a7dfc;
+  font-size: 12px;
+}
+.selected-place {
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: #f5f8ff;
+  border-radius: 4px;
   font-size: 13px;
 }
-
 .clear-btn {
+  margin-left: 8px;
+  font-size: 12px;
+  color: #888;
   background: none;
   border: none;
-  color: white;
   cursor: pointer;
-  font-size: 16px;
-  padding: 0;
-  line-height: 1;
+  text-decoration: underline;
 }
-
-.clear-btn:hover {
-  opacity: 0.8;
-}
-
-.no-place {
-  margin: 0;
+.hint {
   font-size: 12px;
-  color: #999;
-  font-style: italic;
+  color: #888;
 }
-
+.error {
+  color: red;
+  font-size: 13px;
+}
 .form-actions {
   display: flex;
-  gap: 12px;
-  margin-top: 32px;
+  gap: 8px;
 }
-
-button[type="submit"],
-button[type="button"] {
-  flex: 1;
-  padding: 12px 24px;
-  border: none;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 600;
+.form-actions button {
+  padding: 8px 16px;
   cursor: pointer;
-  transition: all 0.2s;
 }
-
-.btn-submit {
-  background: #007bff;
-  color: white;
-}
-
-.btn-submit:hover:not(:disabled) {
-  background: #0056b3;
-}
-
-.btn-submit:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.btn-cancel {
-  background: #f5f5f5;
-  color: #333;
-  border: 1px solid #ddd;
-}
-
-.btn-cancel:hover {
-  background: #e9e9e9;
-}
-
-/* 모바일 반응형 */
-@media (max-width: 768px) {
-  .post-form {
-    padding: 20px;
-  }
-
-  .form-actions {
-    flex-direction: column;
-  }
-
-  button[type="submit"],
-  button[type="button"] {
-    width: 100%;
-  }
-}
-
-@media (max-width: 480px) {
-  .post-form {
-    padding: 16px;
-  }
-
-  label {
-    font-size: 13px;
-  }
-
-  input[type="text"],
-  input[type="password"],
-  textarea {
-    font-size: 16px; /* iOS 자동 줌 방지 */
-  }
-}
-</style>
+</style>ㄴ
