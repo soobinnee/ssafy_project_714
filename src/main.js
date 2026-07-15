@@ -2,7 +2,7 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 
-#테스트_코드_예시
+//테스트_코드_예시
 async function seedLocalData() {
   if (import.meta.env.VITE_USE_SAMPLE !== 'true') return
   if (localStorage.getItem('posts')) return
