@@ -37,17 +37,16 @@
       </div>
     </div>
 
-    <ChatbotWidget v-if="showChat" class="chatbot-widget" />
   </header>
 </template>
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
-import ChatbotWidget from './ChatbotWidget.vue'
+import { useChatbot } from '../../composables/useChatbot.js'
 
 const router = useRouter()
-const showChat = ref(false)
+const { isOpen: showChat, toggleChat } = useChatbot()
 const selectedRegion = ref('')
 const regions = ref([])
 
@@ -89,9 +88,6 @@ function saveRegion() {
   }
 }
 
-function toggleChat() {
-  showChat.value = !showChat.value
-}
 
 function onStorageEvent(e) {
   // storage event fires on other windows/tabs; check relevant keys
