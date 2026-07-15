@@ -33,7 +33,7 @@
       </div>
       <div v-else class="empty-state">
         <p>아직 등록된 게시글이 없습니다.</p>
-        <router-link to="/board/관광지/write" class="btn-primary">
+        <router-link :to="{ name: 'post-write', params: { category: '관광지' } }" class="btn-primary">
           첫 번째 게시글 작성하기
         </router-link>
       </div>

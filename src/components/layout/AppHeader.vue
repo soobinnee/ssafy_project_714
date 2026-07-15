@@ -6,10 +6,10 @@
       </div>
 
       <nav class="nav" role="navigation" aria-label="주요 링크">
-        <router-link to="/">홈</router-link>
-        <router-link to="/dashboard">대시보드</router-link>
-        <router-link to="/board">게시판</router-link>
-        <router-link to="/post/new">글쓰기</router-link>
+        <router-link :to="{ name: 'home' }">홈</router-link>
+        <router-link :to="{ name: 'dashboard' }">대시보드</router-link>
+        <router-link :to="{ name: 'board-list' }">게시판</router-link>
+        <router-link :to="{ name: 'post-write' }">글쓰기</router-link>
       </nav>
 
       <div class="controls" role="region" aria-label="헤더 컨트롤">

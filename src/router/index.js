@@ -12,24 +12,28 @@ const routes = [
     component: HomeView
   },
   {
-    path: '/board/:category',
+    path: '/board/:category?',
     name: 'board-list',
-    component: BoardListView
+    component: BoardListView,
+    props: route => ({ category: route.params.category || null })
   },
   {
-    path: '/board/:category/:id',
+    path: '/board/:category?/:id(\\d+)',
     name: 'post-detail',
-    component: PostDetailView
+    component: PostDetailView,
+    props: route => ({ category: route.params.category || null, id: Number(route.params.id) })
   },
   {
-    path: '/board/:category/write',
+    path: '/board/:category?/write',
     name: 'post-write',
-    component: PostFormView
+    component: PostFormView,
+    props: route => ({ category: route.params.category || null })
   },
   {
-    path: '/board/:category/edit/:id',
+    path: '/board/:category?/edit/:id(\\d+)',
     name: 'post-edit',
-    component: PostFormView
+    component: PostFormView,
+    props: route => ({ category: route.params.category || null, id: Number(route.params.id) })
   },
   {
     path: '/dashboard',

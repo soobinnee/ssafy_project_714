@@ -2,8 +2,8 @@
   <div class="board-list-view">
     <!-- 헤더 -->
     <div class="board-header">
-      <h1>{{ category }} 게시판</h1>
-      <router-link :to="`/board/${category}/write`" class="btn-write">
+      <h1>{{ category || '전체' }} 게시판</h1>
+      <router-link :to="{ name: 'post-write', params: { category } }" class="btn-write">
         ✏️ 글 작성
       </router-link>
     </div>
@@ -83,50 +83,51 @@ export default {
     const route = useRoute()
     const { getPosts } = usePosts()
 
-    const category = ref(route.params.category)
+    const category = ref(route.params.category || null)
     const searchQuery = ref('')
     const selectedRegion = ref('')
     const currentPage = ref(1)
     const postsPerPage = 10
 
-    // 필터링된 게시글
-    const filteredPosts = computed(() => {
-      let posts = getPosts()
+    // route.params 변경에 반응하도록 sync
+    watch(() => route.params.category, (v) => {
+      category.value = v || null
+      currentPage.value = 1
+    })
 
-      // 1. 카테고리 필터
-      posts = posts.filter(p => 
-        p.placeInfo && p.placeInfo.category === category.value
-      )
+    const normalize = s => String(s || '').trim().toLowerCase().replace(/\s+/g, ' ')
 
-      // 2. 지역 필터
-      if (selectedRegion.value) {
-        posts = posts.filter(p => 
-          p.placeInfo && p.placeInfo.region === selectedRegion.value
-        )
+    const filteredPostsRaw = computed(() => {
+      let posts = getPosts() || []
+      const activeCat = normalize(category.value)
+
+      if (activeCat) {
+        posts = posts.filter(p => normalize(p.placeInfo?.category) === activeCat)
       }
 
-      // 3. 검색어 필터
+      if (selectedRegion.value) {
+        const regionNorm = normalize(selectedRegion.value)
+        posts = posts.filter(p => normalize(p.placeInfo?.region) === regionNorm)
+      }
+
       if (searchQuery.value) {
-        const query = searchQuery.value.toLowerCase()
+        const q = normalize(searchQuery.value)
         posts = posts.filter(p =>
-          p.title.toLowerCase().includes(query) ||
-          p.content.toLowerCase().includes(query) ||
-          (p.placeInfo && p.placeInfo.title.toLowerCase().includes(query))
+          normalize(p.title).includes(q) ||
+          normalize(p.content).includes(q) ||
+          normalize(p.placeInfo?.title).includes(q)
         )
       }
 
       return posts
     })
 
-    // 페이지네이션
-    const totalPages = computed(() => 
-      Math.ceil(filteredPosts.value.length / postsPerPage)
-    )
+    const totalPages = computed(() => Math.ceil(filteredPostsRaw.value.length / postsPerPage))
 
     const paginatedPosts = computed(() => {
       const start = (currentPage.value - 1) * postsPerPage
       const end = start + postsPerPage
-      return filteredPosts.value.slice(start, end)
+      return filteredPostsRaw.value.slice(start, end)
     })
 
     const handleSearch = (query) => {
@@ -134,7 +135,6 @@ export default {
       currentPage.value = 1
     }
 
-    // ✅ 개선: selectedRegion 변경 시 currentPage 초기화
     watch(() => selectedRegion.value, () => {
       currentPage.value = 1
     })
@@ -142,7 +142,7 @@ export default {
     const handlePostSelect = (postId) => {
       router.push({
         name: 'post-detail',
-        params: { category: category.value, id: postId }
+        params: { category: category.value || '', id: postId }
       })
     }
 
