@@ -186,7 +186,10 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-# data folder
-data/
+# data folder (현재 Backend가 없어서 data 폴더를 public/data에 올리는 방식으로 함)
+# data/
+
+# 설계서의 이름 노출 방지
+설계서 (담당자 ver.).md
 
 # End of https://www.toptal.com/developers/gitignore/api/windows,visualstudiocode,node
