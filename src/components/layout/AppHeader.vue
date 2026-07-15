@@ -106,8 +106,18 @@ function onCustomPostsUpdate() {
 
 function navTo(name) {
   const current = router.currentRoute.value?.name
+
+  // 게시판으로 갈 때는 명시적으로 경로(/board)를 사용해 category params 제거
+  if (name === 'board-list') {
+    if (current === name) {
+      router.replace({ path: '/board', query: { _r: Date.now() } }).catch(()=>{})
+    } else {
+      router.push({ path: '/board' }).catch(()=>{})
+    }
+    return
+  }
+
   if (current === name) {
-    // 강제 재입장: 쿼리에 타임스탬프를 추가하여 라우터를 replace
     router.replace({ name, query: { _r: Date.now() } }).catch(()=>{})
   } else {
     router.push({ name }).catch(()=>{})
