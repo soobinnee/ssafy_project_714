@@ -1,0 +1,29 @@
+[
+  {
+    "id": "p1",
+    "name": "광화문 광장",
+    "type": "관광",
+    "district": "종로구",
+    "location": { "lat": 37.5759, "lng": 126.9768 },
+    "address": "서울특별시 종로구 세종로",
+    "description": "역사·문화 중심지, 야외 공연·전시가 자주 열림"
+  },
+  {
+    "id": "p2",
+    "name": "홍대 거리",
+    "type": "쇼핑",
+    "district": "마포구",
+    "location": { "lat": 37.5563, "lng": 126.9227 },
+    "address": "서울특별시 마포구 홍익로",
+    "description": "젊은층 중심의 카페·상점 밀집 지역"
+  },
+  {
+    "id": "p3",
+    "name": "북서울 꿈의 숲",
+    "type": "레포츠",
+    "district": "강북구",
+    "location": { "lat": 37.6156, "lng": 127.0306 },
+    "address": "서울특별시 강북구 월계로",
+    "description": "산책로·체육시설 보유"
+  }
+]
