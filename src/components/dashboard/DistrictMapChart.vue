@@ -18,7 +18,7 @@ function colorFor(count) {
 function opacityFor(count, max) {
   if (!count) return 0.6
   const ratio = max > 0 ? count / max : 0
-  return 0.3 + ratio * 0.7
+  return 0.25 + ratio * 0.6
 }
 const GU_LIST = [
   '강남구', '강동구', '강북구', '강서구', '관악구', '광진구', '구로구', '금천구',
