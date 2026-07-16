@@ -42,7 +42,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router' // useRoute 추가
 import CommentList from '@/components/board/CommentList.vue'
 import { getLikeCount, isLikedByMe, toggleLike } from '@/composables/usePlaceLikes'
 import { STORAGE_KEYS } from '@/utils/storageKeys'
@@ -53,6 +53,7 @@ const props = defineProps({
 })
 
 const router = useRouter()
+const route = useRoute() // route 객체 선언
 
 const CATEGORY_FILES = {
   '관광지': '/data/서울/서울_관광지.json',
@@ -123,8 +124,18 @@ function onImageError(e) {
   if (place.value) place.value.firstimage = ''
 }
 
+// 수정된 handleBack 함수: 이전의 카테고리, 자치구, 페이지 번호를 복원하여 목록으로 이동
 function handleBack() {
-  router.push({ name: 'place-list', params: { category: props.category || undefined } })
+  const { fromCategory, fromRegion, fromPage } = route.query
+
+  router.push({
+    name: 'place-list',
+    params: fromCategory ? { category: fromCategory } : {},
+    query: {
+      region: fromRegion || undefined,
+      page: fromPage || undefined
+    }
+  })
 }
 
 watch(() => [props.category, props.contentid], () => {
