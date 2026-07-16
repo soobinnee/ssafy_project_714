@@ -8,7 +8,7 @@
       <nav class="nav" role="navigation" aria-label="주요 링크">
         <a href="#" @click.prevent="navTo('home')">홈</a>
         <a href="#" @click.prevent="navTo('dashboard')">대시보드</a>
-        <a href="#" @click.prevent="navTo('board-list')">게시판</a>
+        <a href="#" @click.prevent="navTo('place-list')">게시판</a>
         <a href="#" @click.prevent="navTo('post-write')">글쓰기</a>
       </nav>
 
@@ -103,13 +103,10 @@ function onCustomPostsUpdate() {
 function navTo(name) {
   const current = router.currentRoute.value?.name
 
-  // 게시판으로 갈 때는 명시적으로 경로(/board)를 사용해 category params 제거
-  if (name === 'board-list') {
-    if (current === name) {
-      router.replace({ path: '/board', query: { _r: Date.now() } }).catch(()=>{})
-    } else {
-      router.push({ path: '/board' }).catch(()=>{})
-    }
+  // 게시판(실제 명소 목록)으로 갈 때는 완전 새로고침으로 이동해서
+  // 이전 카테고리/지역 필터 상태가 절대 남아있지 않도록 함
+  if (name === 'place-list') {
+    window.location.href = '/places'
     return
   }
 

@@ -3,9 +3,15 @@
     <!-- 헤더 -->
     <div class="board-header">
       <h1 class="board-title" @click="resetToAll">{{ pageTitle }}</h1>
-      <router-link :to="{ name: 'post-write', query: { category: category || undefined } }" class="btn-write">
-        ✏️ 글 작성
-      </router-link>
+      <div class="board-header-right">
+        <div class="place-count-badge">
+          <div class="badge-value">{{ totalPlaces }}</div>
+          <div class="badge-label">전체 명소</div>
+        </div>
+        <router-link :to="{ name: 'post-write', query: { category: category || undefined } }" class="btn-write">
+          ✏️ 글 작성
+        </router-link>
+      </div>
     </div>
 
     <!-- 검색 및 필터 -->
@@ -71,6 +77,15 @@ import PostTable from '../components/board/PostTable.vue'
 import PostPagination from '../components/board/PostPagination.vue'
 import { usePosts } from '../composables/usePosts'
 
+// 카테고리 -> 실제 명소 데이터 파일 매핑
+const CATEGORY_FILES = {
+  '관광지': ['/data/서울/서울_관광지.json'],
+  '문화시설': ['/data/서울/서울_문화시설.json'],
+  '레포츠': ['/data/서울/서울_레포츠.json'],
+  '쇼핑': ['/data/서울/서울_쇼핑.json']
+}
+const ALL_FILES = Object.values(CATEGORY_FILES).flat()
+
 export default {
   name: 'BoardListView',
   components: {
@@ -90,6 +105,23 @@ export default {
     const selectedRegion = ref(route.query.region || '')
     const currentPage = ref(1)
     const postsPerPage = 10
+
+    // 카테고리에 맞는 실제 명소 데이터 총 개수
+    const totalPlaces = ref(0)
+    async function loadTotalPlaces() {
+      const files = category.value ? (CATEGORY_FILES[category.value] || []) : ALL_FILES
+      if (files.length === 0) {
+        totalPlaces.value = 0
+        return
+      }
+      try {
+        const results = await Promise.all(files.map(url => fetch(url).then(r => r.json())))
+        totalPlaces.value = results.reduce((sum, data) => sum + (data.items?.length || 0), 0)
+      } catch {
+        totalPlaces.value = 0
+      }
+    }
+    watch(category, loadTotalPlaces, { immediate: true })
 
     // 필터링된 게시글
     const filteredPosts = computed(() => {
@@ -183,6 +215,7 @@ export default {
       selectedRegion,
       currentPage,
       totalPages,
+      totalPlaces,
       filteredPosts: paginatedPosts,
       handleSearch,
       handlePostSelect,
@@ -212,6 +245,33 @@ export default {
   font-weight: bold;
   color: #333;
   cursor: pointer;
+}
+
+.board-header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.place-count-badge {
+  background: #fff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid #eef2f6;
+  min-width: 100px;
+}
+
+.badge-value {
+  font-weight: 700;
+  font-size: 18px;
+  color: #333;
+}
+
+.badge-label {
+  font-size: 12px;
+  color: #666;
+  margin-top: 2px;
 }
 
 .btn-write {
@@ -273,6 +333,11 @@ export default {
     flex-direction: column;
     align-items: flex-start;
     gap: 15px;
+  }
+
+  .board-header-right {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .board-controls {

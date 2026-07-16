@@ -12,6 +12,9 @@
           @delete="showPasswordModal = true"
         />
 
+        <!-- 댓글 목록 및 작성 -->
+        <CommentList :postId="Number(route.params.id)" />
+
         <!-- 비밀번호 확인 모달 (삭제 클릭했을 때만 표시) -->
         <PasswordConfirmModal
           v-if="showPasswordModal"
@@ -35,13 +38,15 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import PostDetail from '../components/board/PostDetail.vue'
 import PasswordConfirmModal from '../components/board/PasswordConfirmModal.vue'
+import CommentList from '../components/board/CommentList.vue'
 import { usePosts } from '../composables/usePosts'
 
 export default {
   name: 'PostDetailView',
   components: {
     PostDetail,
-    PasswordConfirmModal
+    PasswordConfirmModal,
+    CommentList
   },
   setup() {
     const router = useRouter()

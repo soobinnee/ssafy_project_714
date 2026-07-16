@@ -4,6 +4,8 @@ import BoardListView from '../views/BoardListView.vue'
 import PostDetailView from '../views/PostDetailView.vue'
 import PostFormView from '../views/PostFormView.vue'
 import DashboardView from '../views/DashboardView.vue'
+import PlaceListView from '../views/PlaceListView.vue'
+import PlaceDetailView from '../views/PlaceDetailView.vue'
 
 const routes = [
   {
@@ -39,6 +41,18 @@ const routes = [
     path: '/dashboard',
     name: 'dashboard',
     component: DashboardView
+  },
+  {
+    path: '/places/:category?',
+    name: 'place-list',
+    component: PlaceListView,
+    props: route => ({ category: route.params.category || '' })
+  },
+  {
+    path: '/place/:category/:contentid',
+    name: 'place-detail',
+    component: PlaceDetailView,
+    props: true
   }
 ]
 

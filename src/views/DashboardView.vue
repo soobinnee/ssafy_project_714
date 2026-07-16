@@ -1,51 +1,46 @@
 <template>
   <div class="dashboard-view">
     <header class="dv-header">
-      <h2>데이터 시각화 대시보드</h2>
+      <h2>자치구별 명소 분포</h2>
       <div class="dv-meta">
         <div class="meta-item">
-          <div class="meta-value">{{ totalPosts }}</div>
-          <div class="meta-label">전체 게시글</div>
-        </div>
-        <div class="meta-item">
-          <div class="meta-value">{{ lastUpdatedDisplay }}</div>
-          <div class="meta-label">최종 업데이트</div>
+          <div class="meta-value">{{ totalPlaces }}</div>
+          <div class="meta-label">전체 명소</div>
         </div>
       </div>
     </header>
 
     <section class="dv-grid">
-      <div class="left-col">
-        <CategoryChart />
-        <DistrictChart />
-      </div>
-
-      <aside class="right-col">
-        <TopPostsRanking />
-      </aside>
+      <DistrictChart />
     </section>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import CategoryChart from '@/components/dashboard/CategoryChart.vue'
+import { ref, onMounted } from 'vue'
 import DistrictChart from '@/components/dashboard/DistrictChart.vue'
-import TopPostsRanking from '@/components/dashboard/TopPostsRanking.vue'
-import { getDashboardStats } from '@/composables/usePosts'
 
-const stats = getDashboardStats() || { byCategory: {}, byRegion: {}, lastUpdated: null }
+const CATEGORY_FILES = [
+  '/data/서울/서울_관광지.json',
+  '/data/서울/서울_레포츠.json',
+  '/data/서울/서울_문화시설.json',
+  '/data/서울/서울_쇼핑.json'
+]
 
-const totalPosts = computed(() =>
-  Object.values(stats.byCategory || {}).reduce((s, v) => s + v, 0)
-)
+const totalPlaces = ref(0)
 
-const lastUpdatedDisplay = computed(() => {
-  const ts = stats.lastUpdated
-  if (!ts) return '-'
-  const d = new Date(ts)
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-})
+async function loadTotalPlaces() {
+  try {
+    const results = await Promise.all(
+      CATEGORY_FILES.map(url => fetch(url).then(r => r.json()))
+    )
+    totalPlaces.value = results.reduce((sum, data) => sum + (data.items?.length || 0), 0)
+  } catch {
+    totalPlaces.value = 0
+  }
+}
+
+onMounted(loadTotalPlaces)
 </script>
 
 <style scoped>
@@ -69,20 +64,10 @@ const lastUpdatedDisplay = computed(() => {
 
 .dv-grid {
   display:grid;
-  grid-template-columns: 1fr 320px;
+  grid-template-columns: 1fr;
   gap:16px;
   align-items:start;
 }
 
-/* responsive */
-@media (max-width: 900px) {
-  .dv-grid {
-    grid-template-columns: 1fr;
-  }
-  .right-col { order: 2; }
-  .left-col { order: 1; }
-}
-
-.left-col > * { margin-bottom: 12px; }
-.right-col > * { margin-bottom: 12px; }
+.dv-grid > * { margin-bottom: 12px; }
 </style>

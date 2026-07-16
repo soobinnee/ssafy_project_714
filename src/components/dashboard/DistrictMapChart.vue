@@ -18,7 +18,7 @@ function colorFor(count) {
 function opacityFor(count, max) {
   if (!count) return 0.6
   const ratio = max > 0 ? count / max : 0
-  return 0.15 + ratio * 0.85
+  return 0.3 + ratio * 0.7
 }
 const GU_LIST = [
   '강남구', '강동구', '강북구', '강서구', '관악구', '광진구', '구로구', '금천구',
@@ -76,12 +76,13 @@ async function drawMap() {
     onEachFeature: (feature, layer) => {
       const name = feature.properties.name || feature.properties.SIG_KOR_NM
       const count = byRegion[name] || 0
-      layer.bindTooltip(`${name}: 장소 ${count}개`, { sticky: true })
+      layer.bindTooltip(`${name}: 명소 ${count}개`, { sticky: true })
       layer.on('mouseover', () => {
         layer.getElement()?.style.setProperty('cursor', 'pointer')
       })
       layer.on('click', () => {
-        router.push({ name: 'board-list', query: { region: name } })
+        // 사용자 게시글 게시판이 아니라 실제 명소 목록(전체 카테고리)에서 해당 구로 필터링
+        router.push({ name: 'place-list', query: { region: name } })
       })
     }
   }).addTo(map)

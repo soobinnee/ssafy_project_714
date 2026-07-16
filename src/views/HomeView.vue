@@ -71,8 +71,9 @@ export default {
     // 최근 게시글 6개만 조회
     const recentPosts = getPosts().slice(0, 6)
 
+    // 카테고리 카드 클릭 시 실제 명소 데이터 목록(place-list)으로 이동
     const handleCategorySelect = (category) => {
-      router.push({ name: 'board-list', params: { category } })
+      router.push({ name: 'place-list', params: { category } })
     }
 
     const handlePostSelect = (postId) => {
