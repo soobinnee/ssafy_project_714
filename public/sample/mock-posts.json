@@ -27,7 +27,7 @@
     "placeInfo": {
       "contentid": "1059877",
       "title": "여의도한강공원",
-      region: "영등포구",
+      "region": "영등포구",
       "category": "관광지"
     }
   },
@@ -42,9 +42,9 @@
     "createdAt": 1721015000000,
     "placeInfo": {
       "contentid": "126508",
-      title: "경복궁",
-      region: "종로구",
-      category": "관광지"
+      "title": "경복궁",
+      "region": "종로구",
+      "category": "관광지"
     }
   },
   {
@@ -58,9 +58,9 @@
     "createdAt": 1721020000000,
     "placeInfo": {
       "contentid": "2733967",
-      title: "뚝섬 한강공원 윈드서핑장",
-      region: "광진구",
-      category: "레포츠"
+      "title": "뚝섬 한강공원 윈드서핑장",
+      "region": "광진구",
+      "category": "레포츠"
     }
   },
   {
@@ -74,9 +74,9 @@
     "createdAt": 1721025000000,
     "placeInfo": {
       "contentid": "2856808",
-      title: "더현대 서울",
-      region: "영등포구",
-      category: "쇼핑"
+      "title": "더현대 서울",
+      "region": "영등포구",
+      "category": "쇼핑"
     }
   },
   {
@@ -90,9 +90,9 @@
     "createdAt": 1721030000000,
     "placeInfo": {
       "contentid": "126509",
-      title: "국립중앙박물관",
-      region: "용산구",
-      category: "문화시설"
+      "title": "국립중앙박물관",
+      "region": "용산구",
+      "category": "문화시설"
     }
   },
   {
@@ -106,9 +106,9 @@
     "createdAt": 1721035000000,
     "placeInfo": {
       "contentid": "2643504",
-      title: "롯데월드몰",
-      region: "송파구",
-      category: "쇼핑"
+      "title": "롯데월드몰",
+      "region": "송파구",
+      "category": "쇼핑"
     }
   },
   {
@@ -118,13 +118,13 @@
     "content": "자전거 타고 한강 자전거길을 따라 상암까지 온 뒤, 평화의공원 호수 주변을 도는 코스가 정말 상쾌합니다. 가을에는 억새축제가 열리니 맹꽁이 전기차 타고 정상까지 올라가 보시길 권해요.",
     "password": "1234",
     "views": 73,
-    "likes: 16,
-    "createdAt: 1721040000000,
+    "likes": 16,
+    "createdAt": 1721040000000,
     "placeInfo": {
       "contentid": "126514",
-      title: "월드컵공원 (하늘공원)",
-      region: "마포구",
-      category: "레포츠"
+      "title": "월드컵공원 (하늘공원)",
+      "region": "마포구",
+      "category": "레포츠"
     }
   }
 ]
