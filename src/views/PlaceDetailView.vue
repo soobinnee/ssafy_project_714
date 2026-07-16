@@ -43,7 +43,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router' // useRoute 추가
-import CommentList from '@/components/board/CommentList.vue'
+import CommentList from '@/components/board/Commentlist.vue'
 import { getLikeCount, isLikedByMe, toggleLike } from '@/composables/usePlaceLikes'
 import { STORAGE_KEYS } from '@/utils/storageKeys'
 
