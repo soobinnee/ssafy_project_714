@@ -42,7 +42,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import CommentList from '@/components/board/CommentList.vue'
 import { getLikeCount, isLikedByMe, toggleLike } from '@/composables/usePlaceLikes'
 
@@ -52,6 +52,7 @@ const props = defineProps({
 })
 
 const router = useRouter()
+const route = useRoute()
 
 const CATEGORY_FILES = {
   '관광지': '/data/서울/서울_관광지.json',
@@ -105,8 +106,20 @@ function onImageError(e) {
   if (place.value) place.value.firstimage = ''
 }
 
+// 목록에서 넘어올 때 실어둔 카테고리/지역/페이지 정보로 정확히 그 자리로 복귀
 function handleBack() {
-  router.push({ name: 'place-list', params: { category: props.category || undefined } })
+  const fromCategory = route.query.fromCategory
+  const fromRegion = route.query.fromRegion
+  const fromPage = route.query.fromPage
+
+  router.push({
+    name: 'place-list',
+    params: { category: fromCategory || undefined },
+    query: {
+      region: fromRegion || undefined,
+      page: fromPage || undefined
+    }
+  })
 }
 
 watch(() => [props.category, props.contentid], () => {

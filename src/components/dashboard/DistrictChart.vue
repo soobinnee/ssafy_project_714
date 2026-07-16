@@ -10,7 +10,10 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount, computed, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import Chart from 'chart.js/auto'
+
+const router = useRouter()
 
 const canvasEl = ref(null)
 let chart = null
@@ -133,6 +136,16 @@ function renderChart() {
     options: {
       indexAxis: 'y',
       maintainAspectRatio: false,
+      onHover: (event, elements) => {
+        event.native.target.style.cursor = elements.length ? 'pointer' : 'default'
+      },
+      onClick: (event, elements) => {
+        if (!elements.length) return
+        const { datasetIndex, index } = elements[0]
+        const category = chart.data.datasets[datasetIndex].label
+        const gu = chart.data.labels[index]
+        router.push({ name: 'place-list', params: { category }, query: { region: gu } })
+      },
       plugins: {
         legend: { position: 'bottom', labels: { boxWidth: 12, padding: 10 } },
         tooltip: {

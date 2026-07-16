@@ -8,7 +8,7 @@
       <nav class="nav" role="navigation" aria-label="주요 링크">
         <a href="#" @click.prevent="navTo('home')">홈</a>
         <a href="#" @click.prevent="navTo('dashboard')">대시보드</a>
-        <a href="#" @click.prevent="navTo('place-list')">게시판</a>
+        <a href="#" @click.prevent="navTo('place-list')">명소 목록</a>
         <a href="#" @click.prevent="navTo('post-write')">글쓰기</a>
       </nav>
 

@@ -1,7 +1,7 @@
 <template>
   <div class="top-posts">
     <div class="header">
-      <h4>인기 게시글 TOP{{ limit }}</h4>
+      <h4>{{ title }}</h4>
       <button class="refresh" @click="rebuild">새로고침</button>
     </div>
 
@@ -29,21 +29,35 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
-import { getTopPosts } from '@/composables/usePosts'
+import { getTopPosts, getTopPostsByLikes } from '@/composables/usePosts'
+
+const props = defineProps({
+  title: {
+    type: String,
+    default: '인기 게시글'
+  },
+  limit: {
+    type: Number,
+    default: 5
+  },
+  sortBy: {
+    type: String,
+    default: 'views', // 'views' | 'likes'
+    validator: (v) => ['views', 'likes'].includes(v)
+  }
+})
 
 const router = useRouter()
-const limit = 5
 const posts = ref([])
 let refreshTimer = null
 
 function rebuild() {
-  posts.value = getTopPosts(limit) || []
+  posts.value = (props.sortBy === 'likes' ? getTopPostsByLikes(props.limit) : getTopPosts(props.limit)) || []
 }
 
 function goDetail(post) {
-  // 라우트 이름이 프로젝트에서 다르면 path 기반으로 바꿔주세요.
   router.push({
-    name: 'PostDetail',
+    name: 'post-detail',
     params: { category: post.placeInfo?.category || '전체', id: post.id }
   }).catch(()=>{})
 }

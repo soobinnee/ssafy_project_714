@@ -232,6 +232,14 @@ export function getTopPosts(limit = 5) {
 }
 
 /**
+ * 좋아요 기준 인기 게시글 TOP N
+ */
+export function getTopPostsByLikes(limit = 5) {
+  const posts = loadPosts()
+  return [...posts].sort((a, b) => b.likes - a.likes).slice(0, limit)
+}
+
+/**
  * 통합 composable - 여러 뷰에서 필요한 함수들을 묶어서 제공
  */
 export function usePosts() {
@@ -248,6 +256,7 @@ export function usePosts() {
     isLikedByMe,
     getDashboardStats,
     refreshDashboardStats,
-    getTopPosts
+    getTopPosts,
+    getTopPostsByLikes
   }
 }

@@ -24,20 +24,12 @@
       </div>
     </section>
 
-    <!-- 최근 게시글 미리보기 -->
-    <section class="recent-posts-section">
-      <h2>최근 게시글</h2>
-      <div v-if="recentPosts.length > 0" class="recent-posts-container">
-        <PostTable 
-          :posts="recentPosts"
-          @select="handlePostSelect"
-        />
-      </div>
-      <div v-else class="empty-state">
-        <p>아직 등록된 게시글이 없습니다.</p>
-        <router-link :to="{ name: 'post-write', query: { category: '관광지' } }" class="btn-primary">
-          첫 번째 게시글 작성하기
-        </router-link>
+    <!-- 인기 명소 TOP5 (좋아요 / 댓글수) -->
+    <section class="ranking-section">
+      <h2>인기 명소</h2>
+      <div class="ranking-grid">
+        <PlaceTopRanking title="좋아요 TOP5" sortBy="likes" :limit="5" />
+        <PlaceTopRanking title="댓글수 TOP5" sortBy="comments" :limit="5" />
       </div>
     </section>
   </div>
@@ -46,8 +38,7 @@
 <script>
 import DistrictMapChart from '../components/dashboard/DistrictMapChart.vue'
 import CategoryCard from '../components/home/CategoryCard.vue'
-import PostTable from '../components/board/PostTable.vue'
-import { usePosts } from '../composables/usePosts'
+import PlaceTopRanking from '../components/dashboard/PlaceTopRanking.vue'
 import { useRouter } from 'vue-router'
 
 export default {
@@ -55,11 +46,10 @@ export default {
   components: {
     DistrictMapChart,
     CategoryCard,
-    PostTable
+    PlaceTopRanking
   },
   setup() {
     const router = useRouter()
-    const { getPosts } = usePosts()
 
     const categories = [
       { id: 1, icon: '🏛️', label: '관광지', category: '관광지' },
@@ -68,23 +58,14 @@ export default {
       { id: 4, icon: '🛍️', label: '쇼핑', category: '쇼핑' }
     ]
 
-    // 최근 게시글 6개만 조회
-    const recentPosts = getPosts().slice(0, 6)
-
     // 카테고리 카드 클릭 시 실제 명소 데이터 목록(place-list)으로 이동
     const handleCategorySelect = (category) => {
       router.push({ name: 'place-list', params: { category } })
     }
 
-    const handlePostSelect = (postId) => {
-      router.push({ name: 'post-detail', params: { id: postId } })
-    }
-
     return {
       categories,
-      recentPosts,
-      handleCategorySelect,
-      handlePostSelect
+      handleCategorySelect
     }
   }
 }
@@ -141,53 +122,24 @@ export default {
   gap: 20px;
 }
 
-/* 최근 게시글 섹션 */
-.recent-posts-section {
+/* 인기 게시글 랭킹 섹션 */
+.ranking-section {
   padding: 40px 20px;
   max-width: 1200px;
   margin: 0 auto;
 }
 
-.recent-posts-section h2 {
+.ranking-section h2 {
   font-size: 24px;
   font-weight: bold;
   margin-bottom: 30px;
   color: #333;
 }
 
-.recent-posts-container {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-}
-
-.empty-state {
-  background: white;
-  border-radius: 8px;
-  padding: 60px 20px;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.empty-state p {
-  font-size: 18px;
-  color: #999;
-  margin-bottom: 20px;
-}
-
-.btn-primary {
-  display: inline-block;
-  padding: 10px 20px;
-  background: #007bff;
-  color: white;
-  border-radius: 4px;
-  text-decoration: none;
-  transition: background 0.3s;
-}
-
-.btn-primary:hover {
-  background: #0056b3;
+.ranking-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
 }
 
 /* 태블릿 반응형 */
@@ -198,13 +150,17 @@ export default {
   }
 
   .category-section,
-  .recent-posts-section {
+  .ranking-section {
     padding: 30px 15px;
   }
 
   .category-section h2,
-  .recent-posts-section h2 {
+  .ranking-section h2 {
     font-size: 20px;
+  }
+
+  .ranking-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -216,23 +172,14 @@ export default {
   }
 
   .category-section,
-  .recent-posts-section {
+  .ranking-section {
     padding: 20px 10px;
   }
 
   .category-section h2,
-  .recent-posts-section h2 {
+  .ranking-section h2 {
     font-size: 18px;
     margin-bottom: 20px;
-  }
-
-  .empty-state {
-    padding: 40px 15px;
-  }
-
-  .btn-primary {
-    font-size: 14px;
-    padding: 8px 16px;
   }
 }
 </style>

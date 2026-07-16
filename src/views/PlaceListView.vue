@@ -51,7 +51,15 @@
               <td class="col-category">{{ place.category }}</td>
               <td class="col-title">
                 <router-link
-                  :to="{ name: 'place-detail', params: { category: place.category, contentid: place.contentid } }"
+                  :to="{
+                    name: 'place-detail',
+                    params: { category: place.category, contentid: place.contentid },
+                    query: {
+                      fromCategory: props.category || undefined,
+                      fromRegion: selectedRegion || undefined,
+                      fromPage: currentPage
+                    }
+                  }"
                   class="place-link"
                 >
                   {{ place.title }}
@@ -125,7 +133,7 @@ const allPlaces = ref([])
 const searchQuery = ref('')
 const selectedRegion = ref(route.query.region || '')
 const categoryFilter = ref(props.category || '')
-const currentPage = ref(1)
+const currentPage = ref(Number(route.query.page) || 1)
 const pageSize = 10
 
 const pageTitle = computed(() => {
@@ -175,6 +183,17 @@ const filteredPlaces = computed(() => {
       (p.addr1 || '').toLowerCase().includes(q)
     )
   }
+
+  // 자치구 -> 분류 -> 명소명 순으로 가나다 정렬
+  places = [...places].sort((a, b) => {
+    const guCompare = (a.gu || '정보없음').localeCompare(b.gu || '정보없음', 'ko')
+    if (guCompare !== 0) return guCompare
+
+    const categoryCompare = (a.category || '').localeCompare(b.category || '', 'ko')
+    if (categoryCompare !== 0) return categoryCompare
+
+    return (a.title || '').localeCompare(b.title || '', 'ko')
+  })
 
   return places
 })
@@ -310,8 +329,8 @@ onMounted(loadPlaces)
 
 .place-table td {
   padding: 12px;
-  font-size: 14px;
   text-align: center;
+  font-size: 14px;
   color: #666;
   border-bottom: 1px solid #eee;
 }
