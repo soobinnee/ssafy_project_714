@@ -16,7 +16,7 @@
           v-model="passwordInput"
           type="password"
           class="comment-password-input"
-          placeholder="비밀번호 (삭제 시 필요)"
+          placeholder="비밀번호 (삭제/수정 시 필요)"
           maxlength="20"
           required
         />
@@ -38,12 +38,53 @@
           <span class="comment-author">{{ comment.author }}</span>
           <span class="comment-date">{{ formatDate(comment.createdAt) }}</span>
         </div>
-        <p class="comment-content">{{ comment.content }}</p>
-        <button class="btn-delete" @click="handleDelete(comment.id)">삭제</button>
+
+        <!-- 수정 모드 -->
+        <template v-if="editingCommentId === comment.id">
+          <textarea
+            v-model="editContent"
+            class="comment-edit-input"
+            rows="3"
+          ></textarea>
+          <div class="edit-actions">
+            <button class="btn-save" @click="handleSaveEdit(comment.id)">저장</button>
+            <button class="btn-cancel" @click="cancelEdit">취소</button>
+          </div>
+        </template>
+
+        <!-- 일반 표시 -->
+        <template v-else>
+          <p class="comment-content">{{ comment.content }}</p>
+          <div class="comment-actions">
+            <button class="btn-edit" @click="requestEdit(comment.id)">수정</button>
+            <button class="btn-delete" @click="requestDelete(comment.id)">삭제</button>
+          </div>
+        </template>
       </li>
     </ul>
     <div v-else class="comment-empty">
       <p>아직 댓글이 없습니다. 첫 댓글을 남겨보세요!</p>
+    </div>
+
+    <!-- 비밀번호 확인 모달 -->
+    <div v-if="passwordModal.visible" class="modal-overlay" @click.self="closePasswordModal">
+      <div class="modal-box">
+        <h4>{{ passwordModal.mode === 'delete' ? '댓글 삭제' : '댓글 수정' }}</h4>
+        <p>비밀번호를 입력하세요.</p>
+        <input
+          v-model="passwordModal.input"
+          type="password"
+          class="modal-password-input"
+          maxlength="20"
+          autofocus
+          @keyup.enter="confirmPasswordModal"
+        />
+        <p v-if="passwordModal.error" class="modal-error">비밀번호가 일치하지 않습니다.</p>
+        <div class="modal-actions">
+          <button class="btn-cancel" @click="closePasswordModal">취소</button>
+          <button class="btn-confirm" @click="confirmPasswordModal">확인</button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -59,12 +100,23 @@ const props = defineProps({
   }
 })
 
-const { getComments, addComment, checkCommentPassword, deleteComment } = useComments()
+const { getComments, addComment, checkCommentPassword, updateComment, deleteComment } = useComments()
 
 const comments = ref([])
 const authorInput = ref('')
 const passwordInput = ref('')
 const contentInput = ref('')
+
+const editingCommentId = ref(null)
+const editContent = ref('')
+
+const passwordModal = ref({
+  visible: false,
+  mode: null, // 'delete' | 'edit'
+  commentId: null,
+  input: '',
+  error: false
+})
 
 function refresh() {
   comments.value = getComments(props.postId)
@@ -73,7 +125,7 @@ function refresh() {
 function handleSubmit() {
   if (!contentInput.value.trim()) return
   if (!passwordInput.value.trim()) {
-    alert('삭제 시 필요한 비밀번호를 입력해주세요.')
+    alert('삭제/수정 시 필요한 비밀번호를 입력해주세요.')
     return
   }
   addComment(props.postId, {
@@ -86,17 +138,49 @@ function handleSubmit() {
   refresh()
 }
 
-function handleDelete(commentId) {
-  const input = prompt('댓글 삭제를 위해 비밀번호를 입력하세요.')
-  if (input === null) return // 취소
+function requestDelete(commentId) {
+  passwordModal.value = { visible: true, mode: 'delete', commentId, input: '', error: false }
+}
+
+function requestEdit(commentId) {
+  passwordModal.value = { visible: true, mode: 'edit', commentId, input: '', error: false }
+}
+
+function closePasswordModal() {
+  passwordModal.value = { visible: false, mode: null, commentId: null, input: '', error: false }
+}
+
+function confirmPasswordModal() {
+  const { mode, commentId, input } = passwordModal.value
 
   if (!checkCommentPassword(commentId, input)) {
-    alert('비밀번호가 일치하지 않습니다.')
+    passwordModal.value.error = true
     return
   }
 
-  deleteComment(commentId)
+  if (mode === 'delete') {
+    deleteComment(commentId)
+    refresh()
+  } else if (mode === 'edit') {
+    const target = comments.value.find(c => c.id === commentId)
+    editingCommentId.value = commentId
+    editContent.value = target?.content || ''
+  }
+
+  closePasswordModal()
+}
+
+function handleSaveEdit(commentId) {
+  if (!editContent.value.trim()) return
+  updateComment(commentId, editContent.value.trim())
+  editingCommentId.value = null
+  editContent.value = ''
   refresh()
+}
+
+function cancelEdit() {
+  editingCommentId.value = null
+  editContent.value = ''
 }
 
 function formatDate(ts) {
@@ -133,15 +217,7 @@ onMounted(refresh)
   gap: 8px;
 }
 
-.comment-author-input {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-  flex: 1;
-  max-width: 200px;
-}
-
+.comment-author-input,
 .comment-password-input {
   padding: 8px 12px;
   border: 1px solid #ddd;
@@ -151,13 +227,16 @@ onMounted(refresh)
   max-width: 200px;
 }
 
-.comment-content-input {
+.comment-content-input,
+.comment-edit-input {
   padding: 10px 12px;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 14px;
   resize: vertical;
   font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .btn-submit {
@@ -216,22 +295,71 @@ onMounted(refresh)
   color: #444;
   line-height: 1.5;
   white-space: pre-wrap;
-  padding-right: 50px;
+  padding-right: 90px;
 }
 
-.btn-delete {
+.comment-actions {
   position: absolute;
   top: 14px;
   right: 0;
+  display: flex;
+  gap: 10px;
+}
+
+.btn-edit,
+.btn-delete {
   background: transparent;
   border: none;
-  color: #dc3545;
   font-size: 12px;
   cursor: pointer;
 }
 
+.btn-edit {
+  color: #2563eb;
+}
+
+.btn-edit:hover,
 .btn-delete:hover {
   text-decoration: underline;
+}
+
+.btn-delete {
+  color: #dc3545;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.btn-save {
+  padding: 6px 14px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.btn-save:hover {
+  background: #0056b3;
+}
+
+.btn-cancel {
+  padding: 6px 14px;
+  background: #e5e7eb;
+  color: #374151;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.btn-cancel:hover {
+  background: #d1d5db;
 }
 
 .comment-empty {
@@ -243,6 +371,74 @@ onMounted(refresh)
 
 .comment-empty p {
   margin: 0;
+}
+
+/* 비밀번호 확인 모달 */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-box {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  width: 90%;
+  max-width: 320px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.modal-box h4 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  color: #222;
+}
+
+.modal-box p {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: #666;
+}
+
+.modal-password-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.modal-error {
+  color: #dc3545 !important;
+  font-size: 12px !important;
+  margin-top: 6px !important;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.btn-confirm {
+  padding: 8px 16px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.btn-confirm:hover {
+  background: #0056b3;
 }
 
 @media (max-width: 480px) {

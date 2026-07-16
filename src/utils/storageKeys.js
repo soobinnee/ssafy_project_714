@@ -5,5 +5,6 @@ export const STORAGE_KEYS = {
   CHAT_HISTORY: 'localhub_chat_history',
   COMMENTS: 'localhub_comments',
   PLACE_LIKES: 'localhub_place_likes',
-  PLACE_LIKES_USER: 'localhub_place_likes_user'
+  PLACE_LIKES_USER: 'localhub_place_likes_user',
+  PLACES_LITE: 'localhub_places_lite'
 }

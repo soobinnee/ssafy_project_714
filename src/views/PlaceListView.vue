@@ -91,6 +91,7 @@ import { useRouter, useRoute } from 'vue-router'
 import PostPagination from '@/components/board/PostPagination.vue'
 import { getLikeCount } from '@/composables/usePlaceLikes'
 import { getComments } from '@/composables/useComments'
+import { STORAGE_KEYS } from '@/utils/storageKeys'
 
 // PlaceDetailView.vue와 동일한 방식으로 댓글 키 계산 (사용자 게시글 댓글과 충돌 방지)
 function getCommentCount(contentid) {
@@ -161,6 +162,25 @@ async function loadPlaces() {
         })
       })
     })
+
+    // '장소 등록'으로 사용자가 직접 추가한 명소도 합쳐서 표시
+    try {
+      const cached = JSON.parse(localStorage.getItem(STORAGE_KEYS.PLACES_LITE) || '[]')
+      cached
+        .filter(p => !props.category || p.category === props.category)
+        .forEach(p => {
+          merged.push({
+            contentid: p.contentid,
+            title: p.title,
+            addr1: p.address || '',
+            category: p.category,
+            gu: p.region || extractGu(p.address)
+          })
+        })
+    } catch {
+      // 캐시 파싱 실패 시 무시
+    }
+
     allPlaces.value = merged
   } catch {
     allPlaces.value = []

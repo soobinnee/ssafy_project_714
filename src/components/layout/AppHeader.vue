@@ -9,7 +9,7 @@
         <a href="#" @click.prevent="navTo('home')">홈</a>
         <a href="#" @click.prevent="navTo('dashboard')">대시보드</a>
         <a href="#" @click.prevent="navTo('place-list')">명소 목록</a>
-        <a href="#" @click.prevent="navTo('post-write')">글쓰기</a>
+        <a href="#" @click.prevent="navTo('place-register')">장소 등록</a>
       </nav>
 
       <div class="controls" role="region" aria-label="헤더 컨트롤">
@@ -103,7 +103,7 @@ function onCustomPostsUpdate() {
 function navTo(name) {
   const current = router.currentRoute.value?.name
 
-  // 게시판(실제 명소 목록)으로 갈 때는 완전 새로고침으로 이동해서
+  // 명소 목록으로 갈 때는 완전 새로고침으로 이동해서
   // 이전 카테고리/지역 필터 상태가 절대 남아있지 않도록 함
   if (name === 'place-list') {
     window.location.href = '/places'

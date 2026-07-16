@@ -6,6 +6,7 @@ import PostFormView from '../views/PostFormView.vue'
 import DashboardView from '../views/DashboardView.vue'
 import PlaceListView from '../views/PlaceListView.vue'
 import PlaceDetailView from '../views/PlaceDetailView.vue'
+import PlaceFormView from '../views/PlaceFormView.vue'
 
 const routes = [
   {
@@ -41,6 +42,11 @@ const routes = [
     path: '/dashboard',
     name: 'dashboard',
     component: DashboardView
+  },
+  {
+    path: '/place-register',
+    name: 'place-register',
+    component: PlaceFormView
   },
   {
     path: '/places/:category?',

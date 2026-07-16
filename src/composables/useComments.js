@@ -56,6 +56,18 @@ export function checkCommentPassword(commentId, password) {
 }
 
 /**
+ * 댓글 내용 수정 (호출부에서 checkCommentPassword로 먼저 검증)
+ */
+export function updateComment(commentId, newContent) {
+  const comments = loadAllComments()
+  const index = comments.findIndex(c => c.id === commentId)
+  if (index === -1) return false
+  comments[index].content = newContent
+  saveAllComments(comments)
+  return true
+}
+
+/**
  * 댓글 삭제 (비밀번호가 맞는 경우에만 삭제되도록 호출부에서 checkCommentPassword로 먼저 검증)
  */
 export function deleteComment(commentId) {
@@ -69,6 +81,7 @@ export function useComments() {
     getComments,
     addComment,
     checkCommentPassword,
+    updateComment,
     deleteComment
   }
 }

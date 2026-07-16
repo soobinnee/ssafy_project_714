@@ -42,9 +42,10 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import CommentList from '@/components/board/CommentList.vue'
 import { getLikeCount, isLikedByMe, toggleLike } from '@/composables/usePlaceLikes'
+import { STORAGE_KEYS } from '@/utils/storageKeys'
 
 const props = defineProps({
   category: { type: String, required: true },
@@ -52,7 +53,6 @@ const props = defineProps({
 })
 
 const router = useRouter()
-const route = useRoute()
 
 const CATEGORY_FILES = {
   '관광지': '/data/서울/서울_관광지.json',
@@ -86,19 +86,36 @@ async function loadPlace() {
   loading.value = true
   place.value = null
   const url = CATEGORY_FILES[props.category]
-  if (!url) {
-    loading.value = false
-    return
-  }
+
   try {
-    const res = await fetch(url)
-    const data = await res.json()
-    place.value = (data.items || []).find(item => String(item.contentid) === String(props.contentid)) || null
+    if (url) {
+      const res = await fetch(url)
+      const data = await res.json()
+      place.value = (data.items || []).find(item => String(item.contentid) === String(props.contentid)) || null
+    }
   } catch {
     place.value = null
-  } finally {
-    loading.value = false
   }
+
+  // 실제 JSON에 없으면 '장소 등록'으로 직접 추가한 명소인지 로컬 캐시에서 확인
+  if (!place.value) {
+    try {
+      const cached = JSON.parse(localStorage.getItem(STORAGE_KEYS.PLACES_LITE) || '[]')
+      const custom = cached.find(p => String(p.contentid) === String(props.contentid))
+      if (custom) {
+        place.value = {
+          contentid: custom.contentid,
+          title: custom.title,
+          addr1: custom.address || custom.addr1 || '',
+          firstimage: custom.firstimage || ''
+        }
+      }
+    } catch {
+      // 캐시 파싱 실패 시 무시
+    }
+  }
+
+  loading.value = false
 }
 
 function onImageError(e) {
@@ -106,20 +123,8 @@ function onImageError(e) {
   if (place.value) place.value.firstimage = ''
 }
 
-// 목록에서 넘어올 때 실어둔 카테고리/지역/페이지 정보로 정확히 그 자리로 복귀
 function handleBack() {
-  const fromCategory = route.query.fromCategory
-  const fromRegion = route.query.fromRegion
-  const fromPage = route.query.fromPage
-
-  router.push({
-    name: 'place-list',
-    params: { category: fromCategory || undefined },
-    query: {
-      region: fromRegion || undefined,
-      page: fromPage || undefined
-    }
-  })
+  router.push({ name: 'place-list', params: { category: props.category || undefined } })
 }
 
 watch(() => [props.category, props.contentid], () => {
