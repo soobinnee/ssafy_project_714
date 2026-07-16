@@ -29,7 +29,7 @@ export function getComments(postId) {
 /**
  * 댓글 등록
  * @param {number} postId
- * @param {Object} data - { author, content }
+ * @param {Object} data - { author, content, password }
  */
 export function addComment(postId, data) {
   const comments = loadAllComments()
@@ -38,6 +38,7 @@ export function addComment(postId, data) {
     postId,
     author: data.author?.trim() || '익명',
     content: data.content,
+    password: data.password || '',
     createdAt: Date.now()
   }
   comments.push(newComment)
@@ -46,7 +47,16 @@ export function addComment(postId, data) {
 }
 
 /**
- * 댓글 삭제 (별도 인증 없이 본인 브라우저에서만 삭제 가능하도록 간단히 처리)
+ * 댓글 비밀번호 확인
+ */
+export function checkCommentPassword(commentId, password) {
+  const comment = loadAllComments().find(c => c.id === commentId)
+  if (!comment) return false
+  return comment.password === password
+}
+
+/**
+ * 댓글 삭제 (비밀번호가 맞는 경우에만 삭제되도록 호출부에서 checkCommentPassword로 먼저 검증)
  */
 export function deleteComment(commentId) {
   const comments = loadAllComments()
@@ -58,6 +68,7 @@ export function useComments() {
   return {
     getComments,
     addComment,
+    checkCommentPassword,
     deleteComment
   }
 }

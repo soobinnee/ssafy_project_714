@@ -4,13 +4,23 @@
 
     <!-- 댓글 작성 폼 -->
     <form class="comment-form" @submit.prevent="handleSubmit">
-      <input
-        v-model="authorInput"
-        type="text"
-        class="comment-author-input"
-        placeholder="닉네임 (선택)"
-        maxlength="20"
-      />
+      <div class="form-row">
+        <input
+          v-model="authorInput"
+          type="text"
+          class="comment-author-input"
+          placeholder="닉네임 (선택)"
+          maxlength="20"
+        />
+        <input
+          v-model="passwordInput"
+          type="password"
+          class="comment-password-input"
+          placeholder="비밀번호 (삭제 시 필요)"
+          maxlength="20"
+          required
+        />
+      </div>
       <textarea
         v-model="contentInput"
         class="comment-content-input"
@@ -49,10 +59,11 @@ const props = defineProps({
   }
 })
 
-const { getComments, addComment, deleteComment } = useComments()
+const { getComments, addComment, checkCommentPassword, deleteComment } = useComments()
 
 const comments = ref([])
 const authorInput = ref('')
+const passwordInput = ref('')
 const contentInput = ref('')
 
 function refresh() {
@@ -61,16 +72,29 @@ function refresh() {
 
 function handleSubmit() {
   if (!contentInput.value.trim()) return
+  if (!passwordInput.value.trim()) {
+    alert('삭제 시 필요한 비밀번호를 입력해주세요.')
+    return
+  }
   addComment(props.postId, {
     author: authorInput.value,
-    content: contentInput.value.trim()
+    content: contentInput.value.trim(),
+    password: passwordInput.value
   })
   contentInput.value = ''
+  passwordInput.value = ''
   refresh()
 }
 
 function handleDelete(commentId) {
-  if (!confirm('댓글을 삭제하시겠습니까?')) return
+  const input = prompt('댓글 삭제를 위해 비밀번호를 입력하세요.')
+  if (input === null) return // 취소
+
+  if (!checkCommentPassword(commentId, input)) {
+    alert('비밀번호가 일치하지 않습니다.')
+    return
+  }
+
   deleteComment(commentId)
   refresh()
 }
@@ -104,11 +128,26 @@ onMounted(refresh)
   margin-bottom: 24px;
 }
 
+.form-row {
+  display: flex;
+  gap: 8px;
+}
+
 .comment-author-input {
   padding: 8px 12px;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 14px;
+  flex: 1;
+  max-width: 200px;
+}
+
+.comment-password-input {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  flex: 1;
   max-width: 200px;
 }
 
@@ -204,5 +243,15 @@ onMounted(refresh)
 
 .comment-empty p {
   margin: 0;
+}
+
+@media (max-width: 480px) {
+  .form-row {
+    flex-direction: column;
+  }
+  .comment-author-input,
+  .comment-password-input {
+    max-width: none;
+  }
 }
 </style>
