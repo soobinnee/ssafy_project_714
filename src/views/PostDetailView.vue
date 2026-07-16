@@ -38,7 +38,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import PostDetail from '../components/board/PostDetail.vue'
 import PasswordConfirmModal from '../components/board/PasswordConfirmModal.vue'
-import CommentList from '../components/board/Commentlist.vue'
+import CommentList from '../components/board/CommentList.vue'
 import { usePosts } from '../composables/usePosts'
 
 export default {
