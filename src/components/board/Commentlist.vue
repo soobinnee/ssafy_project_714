@@ -125,7 +125,7 @@ function refresh() {
 function handleSubmit() {
   if (!contentInput.value.trim()) return
   if (!passwordInput.value.trim()) {
-    alert('삭제/수정 시 필요한 비밀번호를 입력해주세요.')
+    alert('수정/삭제 시 필요한 비밀번호를 입력해주세요.')
     return
   }
   addComment(props.postId, {

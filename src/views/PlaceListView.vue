@@ -82,6 +82,57 @@
         <p>해당하는 명소가 없습니다.</p>
       </div>
     </div>
+
+    <!-- 신규 등록 장소 (타이틀만 아까 색으로 포인트, 본문 명소명은 일반 색과 완전히 동일) -->
+    <div class="place-content custom-places-section">
+      <div class="section-header">
+        <h2>✨ 신규 등록 장소</h2>
+        <span class="custom-count">총 {{ filteredCustomPlaces.length }}개</span>
+      </div>
+      
+      <div class="places-container">
+        <table v-if="filteredCustomPlaces.length > 0" class="place-table">
+          <thead>
+            <tr>
+              <th class="col-number">번호</th>
+              <th class="col-region">자치구</th>
+              <th class="col-category">분류</th>
+              <th class="col-title">명소명</th>
+              <th class="col-likes">좋아요수</th>
+              <th class="col-comments">댓글수</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(place, index) in filteredCustomPlaces" :key="place.contentid">
+              <td class="col-number">{{ index + 1 }}</td>
+              <td class="col-region">{{ place.gu || '정보없음' }}</td>
+              <td class="col-category">{{ place.category }}</td>
+              <td class="col-title">
+                <router-link
+                  :to="{
+                    name: 'place-detail',
+                    params: { category: place.category, contentid: place.contentid },
+                    query: {
+                      fromCategory: props.category || undefined,
+                      fromRegion: selectedRegion || undefined,
+                      fromPage: currentPage
+                    }
+                  }"
+                  class="place-link"
+                >
+                  {{ place.title }}
+                </router-link>
+              </td>
+              <td class="col-likes">{{ getLikeCount(place.contentid) }}</td>
+              <td class="col-comments">{{ getCommentCount(place.contentid) }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div v-else class="empty-state custom-empty">
+          <p>등록된 신규 장소가 없거나 필터 조건에 맞는 장소가 없습니다.</p>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -93,7 +144,7 @@ import { getLikeCount } from '@/composables/usePlaceLikes'
 import { getComments } from '@/composables/useComments'
 import { STORAGE_KEYS } from '@/utils/storageKeys'
 
-// PlaceDetailView.vue와 동일한 방식으로 댓글 키 계산 (사용자 게시글 댓글과 충돌 방지)
+// 댓글 키 계산
 function getCommentCount(contentid) {
   const n = Number(contentid)
   const key = Number.isFinite(n) ? 900000000000 + n : 0
@@ -131,6 +182,7 @@ function extractGu(addr1) {
 
 const loading = ref(true)
 const allPlaces = ref([])
+const customPlaces = ref([]) 
 const searchQuery = ref('')
 const selectedRegion = ref(route.query.region || '')
 const categoryFilter = ref(props.category || '')
@@ -145,7 +197,6 @@ const pageTitle = computed(() => {
 
 async function loadPlaces() {
   loading.value = true
-  // category가 없으면(전체) 4개 카테고리 모두 로드
   const targets = props.category ? [props.category] : CATEGORY_LIST
 
   try {
@@ -163,27 +214,31 @@ async function loadPlaces() {
       })
     })
 
-    // '장소 등록'으로 사용자가 직접 추가한 명소도 합쳐서 표시
+    const customList = []
     try {
       const cached = JSON.parse(localStorage.getItem(STORAGE_KEYS.PLACES_LITE) || '[]')
       cached
         .filter(p => !props.category || p.category === props.category)
         .forEach(p => {
-          merged.push({
+          const customItem = {
             contentid: p.contentid,
             title: p.title,
             addr1: p.address || '',
             category: p.category,
             gu: p.region || extractGu(p.address)
-          })
+          }
+          customList.push(customItem)
+          merged.push(customItem) 
         })
     } catch {
       // 캐시 파싱 실패 시 무시
     }
 
     allPlaces.value = merged
+    customPlaces.value = customList 
   } catch {
     allPlaces.value = []
+    customPlaces.value = []
   } finally {
     loading.value = false
   }
@@ -204,7 +259,6 @@ const filteredPlaces = computed(() => {
     )
   }
 
-  // 자치구 -> 분류 -> 명소명 순으로 가나다 정렬
   places = [...places].sort((a, b) => {
     const guCompare = (a.gu || '정보없음').localeCompare(b.gu || '정보없음', 'ko')
     if (guCompare !== 0) return guCompare
@@ -216,6 +270,24 @@ const filteredPlaces = computed(() => {
   })
 
   return places
+})
+
+const filteredCustomPlaces = computed(() => {
+  let places = customPlaces.value
+
+  if (selectedRegion.value) {
+    places = places.filter(p => p.gu === selectedRegion.value)
+  }
+
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase()
+    places = places.filter(p =>
+      (p.title || '').toLowerCase().includes(q) ||
+      (p.addr1 || '').toLowerCase().includes(q)
+    )
+  }
+
+  return [...places].sort((a, b) => String(b.contentid).localeCompare(String(a.contentid)))
 })
 
 const totalPages = computed(() => Math.ceil(filteredPlaces.value.length / pageSize) || 1)
@@ -230,7 +302,6 @@ function handleCategoryChange() {
 }
 
 function handleTitleClick() {
-  // 제목 클릭 시 모든 필터를 초기화한 전체 명소 목록으로 완전 새로고침
   window.location.href = '/places'
 }
 
@@ -318,11 +389,41 @@ onMounted(loadPlaces)
 
 .place-content {
   max-width: 1200px;
-  margin: 0 auto;
+  margin: 0 auto 30px;
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+}
+
+/* 신규 등록 장소 섹션 스타일 (테두리 없음) */
+.custom-places-section {
+  border: none;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 20px 4px 20px;
+}
+
+/* [포인트 컬러 유지] 신규 등록 장소 텍스트는 보랏빛 색상 강조 */
+.section-header h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #4f46e5; 
+  margin: 0;
+}
+
+/* [포인트 컬러 유지] 갯수 배지 보랏빛 강조 */
+.custom-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4f46e5;
+  background: #f0f0ff;
+  padding: 4px 12px;
+  border-radius: 12px;
 }
 
 .places-container {
@@ -355,6 +456,7 @@ onMounted(loadPlaces)
   border-bottom: 1px solid #eee;
 }
 
+/* 배치 통일 (전체 명소 테이블과 완벽히 일치하는 너비 비율) */
 .col-number { width: 8%; text-align: center; }
 .col-region { width: 14%; text-align: center; }
 .col-category { width: 12%; text-align: center; }
@@ -362,6 +464,7 @@ onMounted(loadPlaces)
 .col-likes { width: 13%; text-align: center; }
 .col-comments { width: 13%; text-align: center; }
 
+/* 링크 스타일 (수정: 본문 명소명 색상은 위 명소들과 동일하게 차분한 회색으로 통일) */
 .place-link {
   color: #666;
   text-decoration: none;
@@ -376,6 +479,11 @@ onMounted(loadPlaces)
   text-align: center;
   color: #999;
   font-size: 18px;
+}
+
+.custom-empty {
+  padding: 40px 20px;
+  font-size: 15px;
 }
 
 @media (max-width: 768px) {
