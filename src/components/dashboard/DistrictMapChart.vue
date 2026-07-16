@@ -13,7 +13,7 @@ const router = useRouter()
 const mapEl = ref(null)
 let map = null
 function colorFor(count) {
-  return count ? 'rgb(87,108,228)' : '#f5f6f8'
+  return count ? '#4f46e5' : '#f5f6f8'
 }
 function opacityFor(count, max) {
   if (!count) return 0.6
@@ -69,7 +69,7 @@ async function drawMap() {
       return {
         fillColor: colorFor(count),
         fillOpacity: opacityFor(count, maxCount),
-        color: '#334155',
+        color: '#ffffff',
         weight: 1
       }
     },

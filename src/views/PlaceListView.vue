@@ -79,11 +79,11 @@
         />
       </div>
       <div v-else class="empty-state">
-        <p>해당하는 명소가 없습니다.</p>
+        <p>데이터가 없습니다.</p>
       </div>
     </div>
 
-    <!-- 신규 등록 장소 (타이틀만 아까 색으로 포인트, 본문 명소명은 일반 색과 완전히 동일) -->
+    <!-- 신규 등록 장소 (테두리 없음, 타이틀만 포인트 컬러, 데이터 없으면 "데이터가 없습니다." 표출) -->
     <div class="place-content custom-places-section">
       <div class="section-header">
         <h2>✨ 신규 등록 장소</h2>
@@ -129,7 +129,7 @@
           </tbody>
         </table>
         <div v-else class="empty-state custom-empty">
-          <p>등록된 신규 장소가 없거나 필터 조건에 맞는 장소가 없습니다.</p>
+          <p>데이터가 없습니다.</p>
         </div>
       </div>
     </div>
@@ -227,8 +227,18 @@ async function loadPlaces() {
             category: p.category,
             gu: p.region || extractGu(p.address)
           }
-          customList.push(customItem)
-          merged.push(customItem) 
+          
+          // 🔥 [중복 해결 1] 신규 등록 목록(customList)에 중복된 데이터가 또 들어가지 않도록 검사
+          const isDupInCustom = customList.some(item => String(item.contentid) === String(p.contentid))
+          if (!isDupInCustom) {
+            customList.push(customItem)
+          }
+          
+          // 🔥 [중복 해결 2] 전체 명소 목록(merged)에 이미 존재하는 동일한 contentid가 있다면 합치지 않음
+          const isDupInMerged = merged.some(item => String(item.contentid) === String(p.contentid))
+          if (!isDupInMerged) {
+            merged.push(customItem) 
+          }
         })
     } catch {
       // 캐시 파싱 실패 시 무시
@@ -408,7 +418,7 @@ onMounted(loadPlaces)
   padding: 24px 20px 4px 20px;
 }
 
-/* [포인트 컬러 유지] 신규 등록 장소 텍스트는 보랏빛 색상 강조 */
+/* 신규 등록 장소 텍스트는 포인트 보라/블루 컬러 강조 */
 .section-header h2 {
   font-size: 22px;
   font-weight: 700;
@@ -416,7 +426,7 @@ onMounted(loadPlaces)
   margin: 0;
 }
 
-/* [포인트 컬러 유지] 갯수 배지 보랏빛 강조 */
+/* 개수 배지 강조 */
 .custom-count {
   font-size: 13px;
   font-weight: 600;
@@ -456,7 +466,7 @@ onMounted(loadPlaces)
   border-bottom: 1px solid #eee;
 }
 
-/* 배치 통일 (전체 명소 테이블과 완벽히 일치하는 너비 비율) */
+/* 배치 완벽 통일 */
 .col-number { width: 8%; text-align: center; }
 .col-region { width: 14%; text-align: center; }
 .col-category { width: 12%; text-align: center; }
@@ -464,7 +474,7 @@ onMounted(loadPlaces)
 .col-likes { width: 13%; text-align: center; }
 .col-comments { width: 13%; text-align: center; }
 
-/* 링크 스타일 (수정: 본문 명소명 색상은 위 명소들과 동일하게 차분한 회색으로 통일) */
+/* 명소명 글씨 색상은 기본 텍스트와 완전히 똑같이 매칭 */
 .place-link {
   color: #666;
   text-decoration: none;
